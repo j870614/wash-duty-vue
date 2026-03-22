@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>洗碗支援排班管理系統</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'temple-dishwash-app';
+
+        window.db = db;
+        window.auth = auth;
+        window.appId = appId;
+
+        const initAuth = async () => {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("驗證失敗:", error);
+            }
+        };
+        initAuth();
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            height: 40vh;
+            max-height: 400px;
+        }
+
+        .btn-disabled {
+            opacity: 0.5 !important;
+            pointer-events: none !important;
+            cursor: not-allowed !important;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f5f5f4;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #d6d3d1;
+            border-radius: 10px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #a8a29e;
+        }
+
+        .tab-active {
+            border-bottom: 3px solid #d97706;
+            color: #d97706;
+        }
+    </style>
+</head>
+
+<body class="bg-stone-50 text-stone-800 min-h-screen">
+
+    <div class="max-w-6xl mx-auto px-4 py-8">
+
+        <!-- Header -->
+        <header
+            class="mb-8 text-center md:text-left flex flex-col md:flex-row justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-stone-200">
+            <div>
+                <h1 class="text-3xl font-bold text-stone-900">🍽️ 洗碗支援排班管理系統</h1>
+                <p class="text-stone-500 mt-2 text-sm md:text-base">雲端互助版 — 紀錄即時同步，法緣長存</p>
+            </div>
+
+            <nav class="flex gap-6 mt-4 md:mt-0 font-bold text-stone-400">
+                <button id="nav-dashboard" onclick="switchTab('dashboard')"
+                    class="pb-1 tab-active transition-all">即時排班</button>
+                <button id="nav-roster" onclick="switchTab('roster')"
+                    class="pb-1 hover:text-stone-600 transition-all">組別管理</button>
+            </nav>
+        </header>
+
+        <!-- 即時排班介面 -->
+        <div id="tab-content-dashboard">
+            <!-- Sync Status & Action -->
+            <div class="flex flex-col md:flex-row gap-4 mb-8">
+                <div
+                    class="bg-white p-4 rounded-xl shadow-sm text-sm border-l-4 border-amber-500 flex-grow flex items-center justify-between">
+                    <div>
+                        <span class="font-bold text-stone-800">雲端同步狀態：</span>
+                        <span id="sync-status" class="text-stone-500 italic">連線中...</span>
+                    </div>
+                    <div class="flex items-center gap-4 bg-amber-50 px-4 py-2 rounded-lg border border-amber-100">
+                        <button id="btn-prev"
+                            class="text-xl hover:bg-amber-200 w-8 h-8 rounded-full transition-colors flex items-center justify-center font-bold text-amber-700">←</button>
+                        <div class="text-center min-w-[100px]">
+                            <span class="text-[10px] text-amber-700 font-bold block">輪值組別</span>
+                            <span class="text-lg font-black text-amber-600" id="current-group-display">載入中...</span>
+                        </div>
+                        <button id="btn-next"
+                            class="text-xl hover:bg-amber-200 w-8 h-8 rounded-full transition-colors flex items-center justify-center font-bold text-amber-700">→</button>
+                    </div>
+                </div>
+                <button id="btn-complete-shift"
+                    class="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-xl font-bold shadow-lg transition-all flex items-center justify-center gap-2">
+                    <span id="complete-btn-icon">✨</span> <span id="complete-btn-text">完成今日值班並切換下一組</span>
+                </button>
+            </div>
+
+            <!-- Main Content Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <!-- 今日正式值班 -->
+                <div
+                    class="bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden flex flex-col h-full">
+                    <div class="bg-stone-100 p-4 border-b border-stone-200">
+                        <h2 class="text-xl font-bold text-stone-800 flex items-center gap-2">
+                            <span class="text-2xl">📋</span> 今日正式值班名單
+                        </h2>
+                    </div>
+                    <div class="p-6 flex-grow flex flex-col gap-4" id="official-members-container"></div>
+                </div>
+
+                <!-- 應回饋支援人員 -->
+                <div
+                    class="bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden flex flex-col h-full">
+                    <div class="bg-orange-50 p-4 border-b border-orange-100">
+                        <h2 class="text-xl font-bold text-orange-800 flex items-center gap-2">
+                            <span class="text-2xl">🤝</span> 今日應回饋支援人員
+                        </h2>
+                    </div>
+                    <div class="p-6 flex-grow flex flex-col gap-4" id="compensation-container"></div>
+                </div>
+            </div>
+
+            <!-- Charts & Logs -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <!-- 統計圖表 -->
+                <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-stone-200 p-6 flex flex-col">
+                    <h2 class="text-xl font-bold text-stone-800 mb-4 flex items-center gap-2">
+                        <span class="text-2xl">📊</span> 互助與值班數據統計
+                    </h2>
+                    <div class="chart-container flex-grow">
+                        <canvas id="debtStatsChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- 歷史值班紀錄 -->
+                <div class="bg-white rounded-2xl shadow-sm border border-stone-200 flex flex-col overflow-hidden">
+                    <div class="bg-stone-800 text-white p-4 flex justify-between items-center">
+                        <h2 class="text-lg font-bold flex items-center gap-2">
+                            <span class="text-xl">📜</span> 最近 5 筆值班紀錄
+                        </h2>
+                        <span id="history-count"
+                            class="text-[10px] bg-stone-700 px-2 py-1 rounded-full text-stone-300">0/5</span>
+                    </div>
+                    <div id="history-log-container" class="p-4 flex-grow flex flex-col gap-3 bg-stone-50/30">
+                        <p class="text-stone-400 text-sm text-center py-4 italic">尚無歷史紀錄</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 待圓滿紀錄清單 -->
+            <section class="bg-white rounded-2xl shadow-sm border border-stone-200 p-6">
+                <h2 class="text-xl font-bold text-stone-800 mb-4 flex items-center gap-2">
+                    <span class="text-2xl">📝</span> 待圓滿互助紀錄清單
+                </h2>
+                <div id="debt-log-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div>
+            </section>
+        </div>
+
+        <!-- 名單管理介面 -->
+        <div id="tab-content-roster" class="hidden">
+            <div class="bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden">
+                <div class="bg-stone-800 text-white p-6 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-2xl font-bold">🛠️ 組別與成員管理</h2>
+                        <p class="text-stone-400 text-sm mt-1">您可以隨時調整每組成員、新增或刪除組別</p>
+                    </div>
+                    <button onclick="addNewGroup()"
+                        class="bg-amber-600 hover:bg-amber-700 px-4 py-2 rounded-lg font-bold transition-all flex items-center gap-2">
+                        ➕ 新增組別
+                    </button>
+                </div>
+                <div id="roster-editor-container" class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- 動態生成組別編輯器 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 代班彈窗 -->
+    <div id="cover-modal"
+        class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div class="p-6 border-b border-stone-100 bg-stone-50">
+                <h3 class="text-xl font-bold text-stone-800">安排慈悲代班</h3>
+                <p class="text-stone-500 text-sm mt-1">請選擇替 <span id="modal-debtor-name"
+                        class="font-bold text-amber-600"></span> 支援的法師：</p>
+            </div>
+            <div class="p-6 max-h-[50vh] overflow-y-auto custom-scrollbar" id="modal-body">
+                <input type="text" id="member-search" placeholder="搜尋姓名..."
+                    class="w-full mb-4 p-3 border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all">
+                <div id="modal-member-list" class="grid grid-cols-2 gap-2"></div>
+            </div>
+            <div class="p-4 bg-stone-50 border-t border-stone-100 text-right">
+                <button id="btn-close-modal"
+                    class="px-5 py-2 text-stone-600 hover:bg-stone-200 rounded-lg transition-colors font-medium">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        // 預設原始名單（包含更正：普淨）
+        const INITIAL_GROUPS = [
+            { id: 1, members: ["普中師", "普本師"] }, { id: 2, members: ["普導師", "普遠師"] },
+            { id: 3, members: ["圓戒師", "普聚師"] }, { id: 4, members: ["普切師", "普毫師"] },
+            { id: 5, members: ["普計師", "普誨師"] }, { id: 6, members: ["普誏師", "普謹師"] },
+            { id: 7, members: ["普歸師", "普初師"] }, { id: 8, members: ["普登師", "普陽師"] },
+            { id: 9, members: ["普覓師", "普蓮師"] }, { id: 10, members: ["普自師", "普香師"] },
+            { id: 11, members: ["普楷", "普承"] }, { id: 12, members: ["普澤", "普淨", "普懷"] },
+            { id: 13, members: ["普徹", "普語"] }, { id: 14, members: ["普虔", "普邦"] },
+            { id: 15, members: ["普文", "普和"] }
+        ];
+
+        let state = {
+            groups: JSON.parse(JSON.stringify(INITIAL_GROUPS)),
+            currentGroupIndex: 0,
+            debts: [],
+            history: [],
+            modalTargetDebtor: null,
+            user: null,
+            isSyncing: false,
+            activeTab: 'dashboard'
+        };
+
+        let statsChartInstance = null;
+        let unsubscribeData = null;
+
+        // UI 元素
+        const elDisplayGroup = document.getElementById('current-group-display');
+        const elOfficialContainer = document.getElementById('official-members-container');
+        const elCompensationContainer = document.getElementById('compensation-container');
+        const elDebtLogContainer = document.getElementById('debt-log-container');
+        const elHistoryContainer = document.getElementById('history-log-container');
+        const elHistoryCount = document.getElementById('history-count');
+        const elModal = document.getElementById('cover-modal');
+        const elModalDebtorName = document.getElementById('modal-debtor-name');
+        const elModalMemberList = document.getElementById('modal-member-list');
+        const elSearch = document.getElementById('member-search');
+        const elSyncStatus = document.getElementById('sync-status');
+        const elModalBody = document.getElementById('modal-body');
+        const elRosterEditor = document.getElementById('roster-editor-container');
+
+        function getRecordsDocRef() {
+            return doc(window.db, 'artifacts', window.appId, 'public', 'data', 'records', 'v3_dynamic');
+        }
+
+        async function init() {
+            onAuthStateChanged(window.auth, (user) => {
+                state.user = user;
+                if (user) {
+                    elSyncStatus.textContent = "✅ 已連線雲端";
+                    startListening();
+                } else {
+                    elSyncStatus.textContent = "❌ 未連線（登入中...）";
+                }
+            });
+
+            document.getElementById('btn-prev').addEventListener('click', () => syncGroupChange(-1));
+            document.getElementById('btn-next').addEventListener('click', () => syncGroupChange(1));
+            document.getElementById('btn-complete-shift').addEventListener('click', completeCurrentShift);
+            document.getElementById('btn-close-modal').addEventListener('click', closeModal);
+            elSearch.addEventListener('input', renderModalList);
+
+            window.switchTab = switchTab;
+            window.addNewGroup = addNewGroup;
+            window.removeGroup = removeGroup;
+            window.addMember = addMember;
+            window.removeMember = removeMember;
+            window.updateMemberName = updateMemberName;
+        }
+
+        function startListening() {
+            if (unsubscribeData) unsubscribeData();
+            const docRef = getRecordsDocRef();
+            unsubscribeData = onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    state.groups = data.groups || INITIAL_GROUPS;
+                    state.debts = data.list || [];
+                    state.currentGroupIndex = data.currentGroupIndex || 0;
+                    state.history = data.history || [];
+                } else {
+                    // 初始化雲端資料
+                    syncToCloud();
+                }
+                renderAll();
+            }, (err) => {
+                console.error("同步錯誤:", err);
+                elSyncStatus.textContent = "⚠️ 同步錯誤";
+            });
+        }
+
+        async function syncToCloud() {
+            if (!state.user) return;
+            state.isSyncing = true;
+            elSyncStatus.textContent = "⏳ 資料同步中...";
+            try {
+                const docRef = getRecordsDocRef();
+                await setDoc(docRef, {
+                    groups: state.groups,
+                    list: state.debts,
+                    currentGroupIndex: state.currentGroupIndex,
+                    history: state.history
+                });
+                elSyncStatus.textContent = "✅ 已即時同步";
+            } catch (error) {
+                elSyncStatus.textContent = "⚠️ 上傳失敗";
+                console.error(error);
+            } finally {
+                state.isSyncing = false;
+            }
+        }
+
+        function switchTab(tabId) {
+            state.activeTab = tabId;
+            document.getElementById('tab-content-dashboard').classList.toggle('hidden', tabId !== 'dashboard');
+            document.getElementById('tab-content-roster').classList.toggle('hidden', tabId !== 'roster');
+
+            document.getElementById('nav-dashboard').classList.toggle('tab-active', tabId === 'dashboard');
+            document.getElementById('nav-roster').classList.toggle('tab-active', tabId === 'roster');
+
+            if (tabId === 'dashboard') renderAll();
+            else renderRosterEditor();
+        }
+
+        // --- 名單管理邏輯 ---
+
+        function renderRosterEditor() {
+            elRosterEditor.innerHTML = '';
+            state.groups.forEach((group, gIdx) => {
+                const card = document.createElement('div');
+                card.className = 'bg-stone-50 border border-stone-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-all';
+                card.innerHTML = `
+                    <div class="flex justify-between items-center mb-4 border-b border-stone-200 pb-2">
+                        <span class="font-black text-stone-500">第 ${group.id} 組</span>
+                        <button onclick="removeGroup(${gIdx})" class="text-xs text-red-400 hover:text-red-600 font-bold">❌ 刪除組</button>
+                    </div>
+                    <div class="space-y-2 mb-4">
+                        ${group.members.map((m, mIdx) => `
+                            <div class="flex gap-2">
+                                <input type="text" value="${m}" 
+                                    onchange="updateMemberName(${gIdx}, ${mIdx}, this.value)"
+                                    class="flex-grow p-2 text-sm border border-stone-300 rounded-lg focus:ring-1 focus:ring-amber-500 outline-none">
+                                <button onclick="removeMember(${gIdx}, ${mIdx})" class="text-stone-300 hover:text-red-500">✕</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <button onclick="addMember(${gIdx})" class="w-full py-2 border-2 border-dashed border-stone-300 text-stone-400 rounded-lg text-xs font-bold hover:bg-stone-100 transition-all">
+                        ➕ 新增成員
+                    </button>
+                `;
+                elRosterEditor.appendChild(card);
+            });
+        }
+
+        function updateMemberName(gIdx, mIdx, val) {
+            state.groups[gIdx].members[mIdx] = val.trim() || '未命名';
+            syncToCloud();
+        }
+
+        function addMember(gIdx) {
+            state.groups[gIdx].members.push('新成員');
+            syncToCloud();
+            renderRosterEditor();
+        }
+
+        function removeMember(gIdx, mIdx) {
+            state.groups[gIdx].members.splice(mIdx, 1);
+            syncToCloud();
+            renderRosterEditor();
+        }
+
+        function addNewGroup() {
+            const nextId = state.groups.length > 0 ? Math.max(...state.groups.map(g => g.id)) + 1 : 1;
+            state.groups.push({ id: nextId, members: ["新成員"] });
+            syncToCloud();
+            renderRosterEditor();
+        }
+
+        function removeGroup(gIdx) {
+            if (state.groups.length <= 1) return;
+            if (confirm(`確定要刪除第 ${state.groups[gIdx].id} 組嗎？`)) {
+                state.groups.splice(gIdx, 1);
+                if (state.currentGroupIndex >= state.groups.length) {
+                    state.currentGroupIndex = 0;
+                }
+                syncToCloud();
+                renderRosterEditor();
+            }
+        }
+
+        // --- 原有排班邏輯 ---
+
+        async function syncGroupChange(step) {
+            if (state.isSyncing || state.groups.length === 0) return;
+            let newIndex = state.currentGroupIndex + step;
+            if (newIndex < 0) newIndex = state.groups.length - 1;
+            if (newIndex >= state.groups.length) newIndex = 0;
+            state.currentGroupIndex = newIndex;
+            await syncToCloud();
+        }
+
+        async function completeCurrentShift() {
+            if (state.isSyncing || state.groups.length === 0) return;
+
+            const btn = document.getElementById('btn-complete-shift');
+            const icon = document.getElementById('complete-btn-icon');
+            const text = document.getElementById('complete-btn-text');
+
+            btn.classList.add('btn-disabled');
+            icon.textContent = "⏳";
+            text.textContent = "處理中...";
+
+            const currentGroup = state.groups[state.currentGroupIndex];
+            const record = {
+                id: Date.now(),
+                date: new Date().toLocaleString('zh-TW', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }),
+                groupId: currentGroup.id,
+                members: currentGroup.members.join(", ")
+            };
+
+            state.history.unshift(record);
+            if (state.history.length > 5) state.history = state.history.slice(0, 5);
+
+            let nextIndex = (state.currentGroupIndex + 1) % state.groups.length;
+            state.currentGroupIndex = nextIndex;
+
+            await syncToCloud();
+
+            icon.textContent = "✨";
+            text.textContent = "完成今日值班並切換下一組";
+            btn.classList.remove('btn-disabled');
+        }
+
+        function renderAll() {
+            if (state.groups.length === 0) return;
+            const currentGroup = state.groups[state.currentGroupIndex];
+            elDisplayGroup.textContent = `第 ${currentGroup.id} 組`;
+            renderOfficialMembers(currentGroup.members);
+            renderCompensation(currentGroup.members);
+            renderDebtLog();
+            renderHistory();
+            updateChart();
+        }
+
+        function renderOfficialMembers(members) {
+            elOfficialContainer.innerHTML = '';
+            members.forEach(member => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center justify-between p-4 bg-stone-50 rounded-xl border border-stone-200 shadow-sm transition-all hover:border-amber-200';
+                div.innerHTML = `
+                    <span class="text-lg font-bold text-stone-700 flex items-center gap-2">
+                         <span class="w-8 h-8 rounded-full bg-stone-200 flex items-center justify-center text-xs">👤</span>
+                         ${member}
+                    </span>
+                    <button class="text-sm bg-white border border-stone-300 px-4 py-2 rounded-lg hover:bg-amber-50 hover:text-amber-700 transition-all font-medium shadow-sm" onclick="window.openModal('${member}')">➕ 安排代班</button>
+                `;
+                elOfficialContainer.appendChild(div);
+            });
+        }
+
+        function renderCompensation(todayMembers) {
+            elCompensationContainer.innerHTML = '';
+            const compensationList = state.debts.filter(d => todayMembers.includes(d.creditor) && !d.isSettled);
+
+            if (compensationList.length === 0) {
+                elCompensationContainer.innerHTML = `
+                    <div class="flex flex-col items-center justify-center py-10 text-stone-400 border-2 border-dashed border-stone-200 rounded-xl bg-white/50 h-full">
+                        <span class="text-4xl mb-2 opacity-50">✨</span>
+                        <p>今日無人需前來還班</p>
+                    </div>`;
+                return;
+            }
+
+            compensationList.forEach(debt => {
+                const div = document.createElement('div');
+                div.className = 'p-4 bg-orange-100 border border-orange-200 rounded-xl flex items-center justify-between shadow-sm';
+                div.innerHTML = `
+                    <div>
+                        <div class="text-orange-900 font-bold text-lg">${debt.debtor}</div>
+                        <div class="text-xs text-orange-700 mt-1 opacity-80">${debt.dateCreated} 由 ${debt.creditor} 支援</div>
+                    </div>
+                    <button id="btn-settle-${debt.id}" class="bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-orange-700 shadow-md transition-all" onclick="window.settleDebt('${debt.id}')">✅ 已完成回饋</button>
+                `;
+                elCompensationContainer.appendChild(div);
+            });
+        }
+
+        function renderDebtLog() {
+            elDebtLogContainer.innerHTML = '';
+            const pendingDebts = state.debts.filter(d => !d.isSettled);
+            if (pendingDebts.length === 0) {
+                elDebtLogContainer.innerHTML = `<p class="text-stone-400 text-sm col-span-full py-4 text-center italic">目前無待圓滿的互助紀錄。</p>`;
+                return;
+            }
+            pendingDebts.forEach(d => {
+                const div = document.createElement('div');
+                div.className = 'p-3 bg-stone-50 border border-stone-200 rounded-lg flex items-center justify-between text-sm shadow-sm hover:border-orange-200 transition-colors';
+                div.innerHTML = `<div class="flex items-center gap-2"><span class="font-bold text-orange-600">${d.debtor}</span><span class="text-stone-400 text-xs">←支援─</span><span class="font-bold text-green-700">${d.creditor}</span></div><span class="text-[10px] text-stone-400">${d.dateCreated}</span>`;
+                elDebtLogContainer.appendChild(div);
+            });
+        }
+
+        function renderHistory() {
+            elHistoryCount.textContent = `${state.history.length}/5`;
+            if (state.history.length === 0) {
+                elHistoryContainer.innerHTML = `<p class="text-stone-400 text-sm text-center py-10 italic">尚無歷史紀錄</p>`;
+                return;
+            }
+            elHistoryContainer.innerHTML = '';
+            state.history.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'bg-white p-3 rounded-lg border border-stone-200 text-sm shadow-sm hover:border-amber-300 transition-all group';
+                div.innerHTML = `
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="font-bold text-stone-800 group-hover:text-amber-700">第 ${item.groupId} 組</span>
+                        <span class="text-[10px] text-stone-400 font-mono">${item.date}</span>
+                    </div>
+                    <div class="text-stone-500 text-xs truncate">值班人員：${item.members}</div>
+                `;
+                elHistoryContainer.appendChild(div);
+            });
+        }
+
+        window.openModal = function (debtorName) {
+            if (state.isSyncing) return;
+            state.modalTargetDebtor = debtorName;
+            elModalDebtorName.textContent = debtorName;
+            elSearch.value = '';
+            elModalBody.classList.remove('btn-disabled');
+            renderModalList();
+            elModal.classList.remove('hidden');
+            elModal.classList.add('flex');
+        }
+
+        function closeModal() {
+            if (state.isSyncing) return;
+            elModal.classList.add('hidden');
+            elModal.classList.remove('flex');
+        }
+
+        function renderModalList() {
+            const todayMembers = state.groups[state.currentGroupIndex].members;
+            const searchTerm = elSearch.value.trim().toLowerCase();
+            const allMembers = state.groups.flatMap(g => g.members);
+            const availableMembers = allMembers.filter(m => !todayMembers.includes(m) && m.toLowerCase().includes(searchTerm));
+
+            elModalMemberList.innerHTML = '';
+            availableMembers.forEach(m => {
+                const btn = document.createElement('button');
+                btn.className = 'p-3 text-sm font-medium border border-stone-200 rounded-lg hover:bg-amber-50 hover:border-amber-400 transition-all text-left member-select-btn truncate';
+                btn.textContent = m;
+                btn.onclick = (e) => createDebt(m, e.target);
+                elModalMemberList.appendChild(btn);
+            });
+        }
+
+        async function createDebt(creditor, buttonEl) {
+            if (state.isSyncing) return;
+            state.isSyncing = true;
+            elModalBody.classList.add('btn-disabled');
+            const originalText = buttonEl.textContent;
+            buttonEl.innerHTML = `⏳ 處理中...`;
+            buttonEl.classList.add('bg-amber-100', 'border-amber-500', 'text-amber-800');
+
+            const newDebt = {
+                id: 'debt-' + Date.now(),
+                debtor: state.modalTargetDebtor,
+                creditor: creditor,
+                dateCreated: new Date().toLocaleDateString(),
+                isSettled: false
+            };
+
+            state.debts.push(newDebt);
+            await syncToCloud();
+
+            buttonEl.textContent = originalText;
+            elModalBody.classList.remove('btn-disabled');
+            closeModal();
+        }
+
+        window.settleDebt = async function (debtId) {
+            if (state.isSyncing) return;
+            const btn = document.getElementById(`btn-settle-${debtId}`);
+            if (btn) btn.classList.add('btn-disabled', 'bg-stone-400');
+            const debtIdx = state.debts.findIndex(d => d.id === debtId);
+            if (debtIdx > -1) {
+                state.debts[debtIdx].isSettled = true;
+                await syncToCloud();
+            }
+        }
+
+        function updateChart() {
+            const allMembers = state.groups.flatMap(g => g.members);
+            const stats = {};
+            allMembers.forEach(m => stats[m] = { helped: 0, owed: 0 });
+            state.debts.forEach(d => {
+                if (!d.isSettled) {
+                    if (stats[d.creditor]) stats[d.creditor].helped += 1;
+                    if (stats[d.debtor]) stats[d.debtor].owed += 1;
+                }
+            });
+            const activeMembers = allMembers.filter(m => stats[m].helped > 0 || stats[m].owed > 0);
+            const ctx = document.getElementById('debtStatsChart').getContext('2d');
+
+            if (statsChartInstance) {
+                statsChartInstance.data.labels = activeMembers;
+                statsChartInstance.data.datasets[0].data = activeMembers.map(m => stats[m].helped);
+                statsChartInstance.data.datasets[1].data = activeMembers.map(m => stats[m].owed);
+                statsChartInstance.update();
+            } else {
+                statsChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: activeMembers,
+                        datasets: [
+                            { label: '布施支援次數', data: activeMembers.map(m => stats[m].helped), backgroundColor: 'rgba(5, 150, 105, 0.8)', borderRadius: 4 },
+                            { label: '待還回饋次數', data: activeMembers.map(m => stats[m].owed), backgroundColor: 'rgba(217, 119, 6, 0.8)', borderRadius: 4 }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: { stacked: true, grid: { display: false } },
+                            y: { stacked: true, beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#f5f5f4' } }
+                        },
+                        plugins: {
+                            legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } }
+                        }
+                    }
+                });
+            }
+        }
+
+        window.onload = init;
+    </script>
+</body>
+
+</html>

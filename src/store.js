@@ -1,0 +1,120 @@
+import { reactive } from 'vue';
+import { initializeApp } from "firebase/app";
+import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "firebase/auth";
+import { getFirestore, doc, onSnapshot, setDoc } from "firebase/firestore";
+
+const INITIAL_GROUPS = [
+  { id: 1, members: ["普中師", "普本師"] }, { id: 2, members: ["普導師", "普遠師"] },
+  { id: 3, members: ["圓戒師", "普聚師"] }, { id: 4, members: ["普切師", "普毫師"] },
+  { id: 5, members: ["普計師", "普誨師"] }, { id: 6, members: ["普誏師", "普謹師"] },
+  { id: 7, members: ["普歸師", "普初師"] }, { id: 8, members: ["普登師", "普陽師"] },
+  { id: 9, members: ["普覓師", "普蓮師"] }, { id: 10, members: ["普自師", "普香師"] },
+  { id: 11, members: ["普楷", "普承"] }, { id: 12, members: ["普澤", "普淨", "普懷"] },
+  { id: 13, members: ["普徹", "普語"] }, { id: 14, members: ["普虔", "普邦"] },
+  { id: 15, members: ["普文", "普和"] }
+];
+
+export const state = reactive({
+  groups: JSON.parse(JSON.stringify(INITIAL_GROUPS)),
+  currentGroupIndex: 0,
+  debts: [],
+  history: [],
+  modalTargetDebtor: null,
+  user: null,
+  isSyncing: false,
+  activeTab: 'dashboard',
+  syncStatusText: '連線中...'
+});
+
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || ""
+};
+
+// 如果 .env 沒有設定，嘗試讀取原本的全域變數做防呆
+if (!firebaseConfig.apiKey && window.__firebase_config) {
+  Object.assign(firebaseConfig, JSON.parse(window.__firebase_config));
+}
+
+let app, auth, db;
+try {
+  if (firebaseConfig.apiKey) {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+  }
+} catch (e) {
+  console.warn('Firebase setup warning', e);
+}
+
+// 支援透過環境變數改變文件儲存的根目錄名
+const documentAppId = import.meta.env.VITE_DOCUMENT_APP_ID || window.__app_id || 'temple-dishwash-app';
+const getRecordsDocRef = () => doc(db, 'artifacts', documentAppId, 'public', 'data', 'records', 'v3_dynamic');
+
+export const syncToCloud = async () => {
+  if (!state.user || !db) {
+    console.warn("未登入或資料庫未初始化，跳過雲端同步");
+    return;
+  }
+  state.isSyncing = true;
+  state.syncStatusText = "⏳ 資料同步中...";
+  try {
+    await setDoc(getRecordsDocRef(), {
+      groups: JSON.parse(JSON.stringify(state.groups)),
+      list: JSON.parse(JSON.stringify(state.debts)),
+      currentGroupIndex: state.currentGroupIndex,
+      history: JSON.parse(JSON.stringify(state.history))
+    });
+    state.syncStatusText = "✅ 已即時同步";
+  } catch (error) {
+    state.syncStatusText = "⚠️ 上傳失敗";
+  } finally {
+    state.isSyncing = false;
+  }
+};
+
+let unsubscribeData = null;
+const startListening = () => {
+  if (!db) return;
+  if (unsubscribeData) unsubscribeData();
+  unsubscribeData = onSnapshot(getRecordsDocRef(), (docSnap) => {
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      state.groups = data.groups || INITIAL_GROUPS;
+      state.debts = data.list || [];
+      state.currentGroupIndex = data.currentGroupIndex || 0;
+      state.history = data.history || [];
+    } else {
+      syncToCloud();
+    }
+  }, () => {
+    state.syncStatusText = "⚠️ 同步錯誤";
+  });
+};
+
+export const initFirebase = async () => {
+  if (!auth) return;
+  onAuthStateChanged(auth, (user) => {
+    state.user = user;
+    if (user) {
+      state.syncStatusText = "✅ 已連線雲端";
+      startListening();
+    } else {
+      state.syncStatusText = "❌ 未連線（登入中...）";
+    }
+  });
+
+  try {
+    if (typeof window.__initial_auth_token !== 'undefined' && window.__initial_auth_token) {
+      await signInWithCustomToken(auth, window.__initial_auth_token);
+    } else {
+      await signInAnonymously(auth);
+    }
+  } catch (error) {
+    console.error("驗證失敗:", error);
+  }
+};
