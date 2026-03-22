@@ -1,6 +1,6 @@
-import { reactive } from 'vue';
+import { reactive, computed } from 'vue';
 import { initializeApp } from "firebase/app";
-import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "firebase/auth";
+import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { getFirestore, doc, onSnapshot, setDoc } from "firebase/firestore";
 
 const INITIAL_GROUPS = [
@@ -24,6 +24,15 @@ export const state = reactive({
   isSyncing: false,
   activeTab: 'dashboard',
   syncStatusText: '連線中...'
+});
+
+export const isAdmin = computed(() => {
+  if (!state.user || state.user.isAnonymous || !state.user.email) return false;
+  // 從環境變數讀取管理員 Email 列表 (以逗號分隔)，如果沒有設定就預設全部拒絕
+  const adminEmails = import.meta.env.VITE_ADMIN_EMAILS 
+    ? import.meta.env.VITE_ADMIN_EMAILS.split(',').map(e => e.trim()) 
+    : [];
+  return adminEmails.includes(state.user.email);
 });
 
 const firebaseConfig = {
@@ -116,5 +125,30 @@ export const initFirebase = async () => {
     }
   } catch (error) {
     console.error("驗證失敗:", error);
+  }
+};
+
+export const loginWithGoogle = async () => {
+  if (!auth) return;
+  state.syncStatusText = "登入中...";
+  const provider = new GoogleAuthProvider();
+  try {
+    await signInWithPopup(auth, provider);
+  } catch (error) {
+    console.error("Google登入失敗:", error);
+    state.syncStatusText = "登入失敗";
+  }
+};
+
+export const logout = async () => {
+  if (!auth) return;
+  try {
+    state.syncStatusText = "登出中...";
+    await signOut(auth);
+    // 登出後重新進行匿名登入以保持唯讀或基本連線
+    await initFirebase();
+  } catch (error) {
+    console.error("登出失敗:", error);
+    state.syncStatusText = "登出失敗";
   }
 };
