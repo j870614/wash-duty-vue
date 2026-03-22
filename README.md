@@ -8,18 +8,11 @@
 
 ### 步驟 1：設定 GitHub Secrets
 
-由於專案使用了 Firebase 敏感資訊，你需要在 GitHub Repository 中設定以下 **Secrets**：
-
-1. 前往你的 GitHub Repository 頁面。
-2. 點擊 **Settings** -> **Secrets and variables** -> **Actions**。
-3. 點擊 **New repository secret**，並對照 `.env.example` 加入以下變數：
-   - `VITE_FIREBASE_API_KEY`
-   - `VITE_FIREBASE_AUTH_DOMAIN`
-   - `VITE_FIREBASE_PROJECT_ID`
-   - `VITE_FIREBASE_STORAGE_BUCKET`
-   - `VITE_FIREBASE_MESSAGING_SENDER_ID`
-   - `VITE_FIREBASE_APP_ID`
-   - `VITE_DOCUMENT_APP_ID` (選填)
+1. 前往你的 GitHub Repository -> **Settings** -> **Secrets and variables** -> **Actions**。
+2. 點擊 **New repository secret**：
+   - **Name**: `ENV_FILE`
+   - **Secret**: (直接複製並貼上你整份 `.env` 的內容)
+3. 點擊 **Add secret**。
 
 ### 步驟 2：啟用 GitHub Pages
 
