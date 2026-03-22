@@ -1,7 +1,7 @@
 <template>
   <div class="container py-4 min-vh-100 bg-light font-noto">
     <header class="d-flex flex-column flex-md-row justify-content-between align-items-center bg-white p-4 rounded-4 shadow-sm border mb-4">
-      <div class="text-center text-md-start mb-3 mb-md-0">
+      <div class="text-center text-md-start mb-3 mb-md-0" @click="state.activeTab = 'dashboard'" style="cursor: pointer;">
         <h1 class="h3 fw-bold text-dark mb-1">🍽️ 洗碗支援排班管理系統</h1>
         <p class="text-secondary small mb-0">雲端互助版 — 紀錄即時同步，法緣長存</p>
       </div>
@@ -13,40 +13,46 @@
           <span v-else class="badge bg-secondary">👤 訪客 (匿名)</span>
           
           <button v-if="state.user && !state.user.isAnonymous" @click="logout" class="btn btn-sm btn-outline-danger">登出</button>
-          <button v-else @click="loginWithGoogle" class="btn btn-sm btn-outline-primary">Google 登入</button>
+          <button v-else @click="loginWithGoogle" class="btn btn-sm btn-outline-primary">管理員登入</button>
         </div>
         <nav class="d-flex gap-4 fw-bold">
-          <button 
+          <button v-if="isAdmin"
             class="btn btn-link text-decoration-none px-0 pb-1"
             :class="state.activeTab === 'dashboard' ? 'active-tab' : 'text-secondary'"
             @click="state.activeTab = 'dashboard'">即時排班</button>
-          <button v-if="isAdmin"
+            
+          <button v-if="isSuperAdmin"
+            class="btn btn-link text-decoration-none px-0 pb-1"
+            :class="state.activeTab === 'admin' ? 'active-tab' : 'text-secondary'"
+            @click="state.activeTab = 'admin'">權限管理</button>
+            
+          <button v-if="!isAdmin && state.activeTab === 'roster'"
+            class="btn btn-link text-decoration-none px-0 pb-1 text-primary"
+            @click="state.activeTab = 'dashboard'">← 回到即時排班</button>
+
+          <button 
             class="btn btn-link text-decoration-none px-0 pb-1"
             :class="state.activeTab === 'roster' ? 'active-tab' : 'text-secondary'"
-            @click="state.activeTab = 'roster'">組別管理 (管理員)</button>
+            @click="state.activeTab = 'roster'">組別名單</button>
         </nav>
       </div>
     </header>
 
     <Dashboard v-if="state.activeTab === 'dashboard'" />
-    <RosterEditor v-else-if="isAdmin && state.activeTab === 'roster'" />
+    <AdminManager v-else-if="isSuperAdmin && state.activeTab === 'admin'" />
+    <RosterEditor v-else-if="state.activeTab === 'roster'" />
     <ShiftModal />
   </div>
 </template>
 
 <script setup>
-import { onMounted, watch } from 'vue';
-import { state, initFirebase, loginWithGoogle, logout, isAdmin } from './store.js';
+import { onMounted } from 'vue';
+import { state, initFirebase, loginWithGoogle, logout, isAdmin, isSuperAdmin } from './store.js';
 import Dashboard from './components/Dashboard.vue';
+import AdminManager from './components/AdminManager.vue';
 import RosterEditor from './components/RosterEditor.vue';
 import ShiftModal from './components/ShiftModal.vue';
 import 'bootstrap/dist/css/bootstrap.min.css';
-
-watch(() => isAdmin.value, (newVal) => {
-  if (!newVal && state.activeTab === 'roster') {
-    state.activeTab = 'dashboard';
-  }
-});
 
 onMounted(() => {
   initFirebase();

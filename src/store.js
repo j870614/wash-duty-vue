@@ -19,6 +19,7 @@ export const state = reactive({
   currentGroupIndex: 0,
   debts: [],
   history: [],
+  admins: [],
   modalTargetDebtor: null,
   user: null,
   isSyncing: false,
@@ -26,13 +27,23 @@ export const state = reactive({
   syncStatusText: '連線中...'
 });
 
-export const isAdmin = computed(() => {
+export const isSuperAdmin = computed(() => {
   if (!state.user || state.user.isAnonymous || !state.user.email) return false;
-  // 從環境變數讀取管理員 Email 列表 (以逗號分隔)，如果沒有設定就預設全部拒絕
-  const adminEmails = import.meta.env.VITE_ADMIN_EMAILS 
+  const envAdmins = import.meta.env.VITE_ADMIN_EMAILS 
     ? import.meta.env.VITE_ADMIN_EMAILS.split(',').map(e => e.trim()) 
     : [];
-  return adminEmails.includes(state.user.email);
+  if (envAdmins.includes(state.user.email)) return true;
+  
+  const found = state.admins.find(a => a.email === state.user.email);
+  return found && found.role === 'super';
+});
+
+export const isAdmin = computed(() => {
+  if (isSuperAdmin.value) return true;
+  if (!state.user || state.user.isAnonymous || !state.user.email) return false;
+  
+  const found = state.admins.find(a => a.email === state.user.email);
+  return found && (found.role === 'super' || found.role === 'normal');
 });
 
 const firebaseConfig = {
@@ -76,7 +87,8 @@ export const syncToCloud = async () => {
       groups: JSON.parse(JSON.stringify(state.groups)),
       list: JSON.parse(JSON.stringify(state.debts)),
       currentGroupIndex: state.currentGroupIndex,
-      history: JSON.parse(JSON.stringify(state.history))
+      history: JSON.parse(JSON.stringify(state.history)),
+      admins: JSON.parse(JSON.stringify(state.admins))
     });
     state.syncStatusText = "✅ 已即時同步";
   } catch (error) {
@@ -97,6 +109,7 @@ const startListening = () => {
       state.debts = data.list || [];
       state.currentGroupIndex = data.currentGroupIndex || 0;
       state.history = data.history || [];
+      state.admins = data.admins || [];
     } else {
       syncToCloud();
     }

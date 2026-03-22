@@ -1,30 +1,34 @@
 <template>
   <div>
-    <!-- Sync Status & Action -->
+    <!-- Sync Status -->
+    <div class="text-end mb-2 small text-muted fst-italic">
+      雲端同步狀態：{{ state.syncStatusText }}
+    </div>
+
+    <!-- Top Bar: Current Shift & Admin Actions -->
     <div class="row g-3 mb-4">
-      <div class="col-12 col-md-8">
-        <div class="bg-white p-3 rounded-4 shadow-sm border-start border-4 border-warning d-flex flex-column flex-sm-row align-items-sm-center justify-content-between h-100 gap-3">
-          <div>
-            <span class="fw-bold text-dark">雲端同步狀態：</span>
-            <span class="text-secondary fst-italic">{{ state.syncStatusText }}</span>
+      <div :class="isAdmin ? 'col-12 col-md-8' : 'col-12'">
+        <!-- Giant Shift Indicator -->
+        <div class="bg-white p-4 rounded-4 shadow-sm border-start border-5 h-100 d-flex flex-column flex-sm-row align-items-center justify-content-center gap-4" style="border-color: #8b4513 !important;">
+          <button v-if="isAdmin" @click="syncGroupChange(-1)" class="btn btn-outline-secondary rounded-circle fw-bold fs-4 p-0 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px;">←</button>
+          
+          <div class="text-center d-flex flex-column align-items-center justify-content-center">
+            <span class="d-block fw-bold text-muted mb-2" style="letter-spacing: 4px; font-size: 14px;">當前輪值組別</span>
+            <span class="fw-bold" style="font-size: 3.5rem; line-height: 1; color: #8b4513;">第 {{ currentGroup?.id || '?' }} 組</span>
           </div>
-          <div class="d-flex align-items-center gap-3 px-4 py-2 rounded-4 shadow-sm" style="background-color: #fd7e14; color: white;">
-            <button @click="syncGroupChange(-1)" class="btn btn-sm btn-light rounded-circle fw-bold shadow-sm d-flex align-items-center justify-content-center" style="color: #fd7e14; width: 32px; height: 32px; padding: 0;">←</button>
-            <div class="text-center" style="min-width: 90px;">
-              <span class="d-block fw-bold opacity-75" style="font-size: 11px; letter-spacing: 1px;">輪值組別</span>
-              <span class="fs-4 fw-bold">第 {{ currentGroup?.id || '?' }} 組</span>
-            </div>
-            <button @click="syncGroupChange(1)" class="btn btn-sm btn-light rounded-circle fw-bold shadow-sm d-flex align-items-center justify-content-center" style="color: #fd7e14; width: 32px; height: 32px; padding: 0;">→</button>
-          </div>
+          
+          <button v-if="isAdmin" @click="syncGroupChange(1)" class="btn btn-outline-secondary rounded-circle fw-bold fs-4 p-0 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px;">→</button>
         </div>
       </div>
-      <div class="col-12 col-md-4">
+      
+      <div v-if="isAdmin" class="col-12 col-md-4">
         <button 
           @click="completeCurrentShift"
           :disabled="state.isSyncing || state.groups.length === 0"
-          class="btn btn-success w-100 h-100 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2 rounded-4 py-3">
-          <span>{{ state.isSyncing ? '⏳' : '✨' }}</span> 
-          <span>{{ state.isSyncing ? '處理中...' : '完成今日值班並切換下一組' }}</span>
+          class="btn btn-success w-100 h-100 fw-bold shadow-sm d-flex flex-column align-items-center justify-content-center gap-2 rounded-4 py-3">
+          <span class="fs-2">{{ state.isSyncing ? '⏳' : '✨' }}</span> 
+          <span class="fs-5">{{ state.isSyncing ? '處理中...' : '完成本次值班' }}</span>
+          <span class="small text-white-50">自動紀錄並切換下一組</span>
         </button>
       </div>
     </div>
@@ -34,7 +38,7 @@
       <div class="col-12 col-md-6">
         <div class="card h-100 shadow-sm border-0 rounded-4 overflow-hidden">
           <div class="card-header bg-light border-bottom fw-bold text-dark p-3">
-            <span class="fs-5 me-2">📋</span> 今日正式值班名單
+            <span class="fs-5 me-2">📋</span> 本次正式值班名單
           </div>
           <div class="card-body d-flex flex-column gap-3 p-4">
             <div v-for="member in currentGroup?.members" :key="member" class="d-flex justify-content-between align-items-center p-3 bg-white rounded-3 border">
@@ -52,12 +56,12 @@
       <div class="col-12 col-md-6">
         <div class="card h-100 shadow-sm border-0 rounded-4 overflow-hidden">
           <div class="card-header bg-warning bg-opacity-10 border-bottom border-warning border-opacity-25 fw-bold p-3 text-warning-emphasis">
-            <span class="fs-5 me-2">🤝</span> 今日應回饋支援人員
+            <span class="fs-5 me-2">🤝</span> 本次應回饋支援人員
           </div>
           <div class="card-body p-4">
             <div v-if="compensationList.length === 0" class="text-center text-muted p-5 border rounded-3 bg-light d-flex flex-column align-items-center h-100 justify-content-center" style="border-style: dashed !important;">
               <span class="fs-1 d-block opacity-50 mb-2">✨</span>
-              <p class="mb-0">今日無人需前來還班</p>
+              <p class="mb-0">本次無人需前來還班</p>
             </div>
             <div v-else class="d-flex flex-column gap-3">
               <div v-for="debt in compensationList" :key="debt.id" class="p-3 bg-warning bg-opacity-10 border border-warning border-opacity-25 rounded-3 d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
@@ -65,9 +69,12 @@
                   <div class="text-dark fw-bold fs-5" style="color: #995c00 !important;">{{ debt.debtor }}</div>
                   <div class="small mt-1 text-muted">{{ debt.dateCreated }} 由 {{ debt.creditor }} 支援</div>
                 </div>
-                <button class="btn btn-warning text-white fw-bold shadow-sm" :disabled="state.isSyncing" @click="settleDebt(debt.id)" style="background-color: #fd7e14; border-color: #fd7e14;">
+                <button v-if="isAdmin" class="btn btn-warning text-white fw-bold shadow-sm" :disabled="state.isSyncing" @click="settleDebt(debt.id)" style="background-color: #fd7e14; border-color: #fd7e14;">
                   ✅ 已完成回饋
                 </button>
+                <div v-else class="badge bg-warning text-dark bg-opacity-25 border border-warning border-opacity-50 p-2 opacity-75">
+                  ⏱ 待回饋
+                </div>
               </div>
             </div>
           </div>
@@ -92,13 +99,41 @@
              <span class="badge bg-secondary rounded-pill">{{ state.history.length }}/5</span>
           </div>
           <div class="card-body bg-light flex-grow-1 overflow-auto p-3 d-flex flex-column gap-2" style="background-color: #f8f9fa;">
-             <p v-if="state.history.length === 0" class="text-muted text-center py-4 fst-italic mb-0">尚無歷史紀錄</p>
-             <div v-for="item in state.history" :key="item.id" class="bg-white p-3 border rounded-3 shadow-sm hover-border">
-               <div class="d-flex justify-content-between mb-1">
-                 <strong class="text-dark">第 {{ item.groupId }} 組</strong>
-                 <span class="text-muted" style="font-size: 10px; font-family: monospace;">{{ item.date }}</span>
+             <div v-for="item in state.history" :key="item.id" class="mb-2">
+               <!-- 編輯模式 -->
+               <div v-if="editingHistoryId === item.id" class="bg-white p-3 border border-warning rounded-3 shadow-sm">
+                 <div class="mb-2">
+                   <label class="form-label small text-muted mb-1">值班日期</label>
+                   <input v-model="editData.date" class="form-control form-control-sm focus-ring focus-ring-warning">
+                 </div>
+                 <div class="mb-2">
+                   <label class="form-label small text-muted mb-1">值班人員</label>
+                   <input v-model="editData.members" class="form-control form-control-sm focus-ring focus-ring-warning">
+                 </div>
+                 <div class="mb-2">
+                   <label class="form-label small text-muted mb-1">實際代班 (若無可留空)</label>
+                   <input v-model="editData.substitutes" class="form-control form-control-sm focus-ring focus-ring-warning" placeholder="例如：某某某">
+                 </div>
+                 <div class="d-flex justify-content-end gap-2 mt-3">
+                   <button class="btn btn-sm btn-light border fw-bold" @click="editingHistoryId = null" :disabled="state.isSyncing">取消</button>
+                   <button class="btn btn-sm btn-warning fw-bold text-dark" @click="saveHistory(item)" :disabled="state.isSyncing">💾 儲存</button>
+                 </div>
                </div>
-               <div class="text-muted small text-truncate">值班人員：{{ item.members }}</div>
+
+               <!-- 檢視模式 -->
+               <div v-else class="bg-white p-3 border rounded-3 shadow-sm hover-border h-100">
+                 <div class="d-flex justify-content-between align-items-center mb-2">
+                   <strong class="text-dark fs-6" style="color: #8b4513 !important;">第 {{ item.groupId }} 組</strong>
+                   <div class="d-flex align-items-center gap-2">
+                     <span class="text-muted" style="font-size: 11px; font-family: monospace;">{{ item.date }}</span>
+                     <button v-if="isAdmin" @click="startEditHistory(item)" class="btn btn-sm btn-link text-decoration-none p-0 text-secondary" title="編輯這筆紀錄">✏️</button>
+                   </div>
+                 </div>
+                 <div class="text-secondary small">輪值名單：{{ item.members }}</div>
+                 <div v-if="item.substitutes" class="small mt-2 px-2 py-1 bg-warning bg-opacity-10 text-dark rounded border border-warning" style="border-style: dashed !important;">
+                   <span class="fw-bold">🔀 實際代班：</span>{{ item.substitutes }}
+                 </div>
+               </div>
              </div>
           </div>
         </div>
@@ -126,9 +161,27 @@
 </template>
 
 <script setup>
-import { computed, watch, onMounted, nextTick } from 'vue';
+import { computed, watch, onMounted, nextTick, ref, reactive } from 'vue';
 import Chart from 'chart.js/auto';
-import { state, syncToCloud } from '../store.js';
+import { state, syncToCloud, isAdmin } from '../store.js';
+
+const editingHistoryId = ref(null);
+const editData = reactive({ date: '', members: '', substitutes: '' });
+
+const startEditHistory = (item) => {
+  editingHistoryId.value = item.id;
+  editData.date = item.date || '';
+  editData.members = item.members || '';
+  editData.substitutes = item.substitutes || '';
+};
+
+const saveHistory = async (item) => {
+  item.date = editData.date.trim();
+  item.members = editData.members.trim();
+  item.substitutes = editData.substitutes.trim();
+  await syncToCloud();
+  editingHistoryId.value = null;
+};
 
 const currentGroup = computed(() => state.groups[state.currentGroupIndex]);
 const pendingDebts = computed(() => state.debts.filter(d => !d.isSettled));
@@ -152,7 +205,8 @@ const completeCurrentShift = async () => {
     id: Date.now(),
     date: new Date().toLocaleString('zh-TW', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }),
     groupId: currentGroup.value.id,
-    members: currentGroup.value.members.join(", ")
+    members: currentGroup.value.members.join(", "),
+    substitutes: ""
   };
   state.history.unshift(record);
   if (state.history.length > 5) state.history = state.history.slice(0, 5);
