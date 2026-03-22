@@ -8,13 +8,13 @@
             <span class="fw-bold text-dark">雲端同步狀態：</span>
             <span class="text-secondary fst-italic">{{ state.syncStatusText }}</span>
           </div>
-          <div class="d-flex align-items-center gap-3 bg-warning bg-opacity-10 px-3 py-2 rounded-3 border border-warning border-opacity-25">
-            <button @click="syncGroupChange(-1)" class="btn btn-sm btn-outline-warning rounded-circle fw-bold">←</button>
-            <div class="text-center" style="min-width: 80px;">
-              <span class="d-block text-warning fw-bold" style="font-size: 10px;">輪值組別</span>
-              <span class="fs-5 fw-bold text-warning">第 {{ currentGroup?.id || '?' }} 組</span>
+          <div class="d-flex align-items-center gap-3 px-4 py-2 rounded-4 shadow-sm" style="background-color: #fd7e14; color: white;">
+            <button @click="syncGroupChange(-1)" class="btn btn-sm btn-light rounded-circle fw-bold shadow-sm d-flex align-items-center justify-content-center" style="color: #fd7e14; width: 32px; height: 32px; padding: 0;">←</button>
+            <div class="text-center" style="min-width: 90px;">
+              <span class="d-block fw-bold opacity-75" style="font-size: 11px; letter-spacing: 1px;">輪值組別</span>
+              <span class="fs-4 fw-bold">第 {{ currentGroup?.id || '?' }} 組</span>
             </div>
-            <button @click="syncGroupChange(1)" class="btn btn-sm btn-outline-warning rounded-circle fw-bold">→</button>
+            <button @click="syncGroupChange(1)" class="btn btn-sm btn-light rounded-circle fw-bold shadow-sm d-flex align-items-center justify-content-center" style="color: #fd7e14; width: 32px; height: 32px; padding: 0;">→</button>
           </div>
         </div>
       </div>
