@@ -32,6 +32,11 @@
 
           <button 
             class="btn btn-link text-decoration-none px-0 pb-1"
+            :class="state.activeTab === 'history' ? 'active-tab' : 'text-secondary'"
+            @click="state.activeTab = 'history'">值班紀錄</button>
+
+          <button 
+            class="btn btn-link text-decoration-none px-0 pb-1"
             :class="state.activeTab === 'roster' ? 'active-tab' : 'text-secondary'"
             @click="state.activeTab = 'roster'">組別名單</button>
         </nav>
@@ -41,7 +46,10 @@
     <Dashboard v-if="state.activeTab === 'dashboard'" />
     <AdminManager v-else-if="isSuperAdmin && state.activeTab === 'admin'" />
     <RosterEditor v-else-if="state.activeTab === 'roster'" />
+    <HistoryView v-else-if="state.activeTab === 'history'" />
     <ShiftModal />
+    <GlobalModal />
+    <GlobalToast />
   </div>
 </template>
 
@@ -51,7 +59,10 @@ import { state, initFirebase, loginWithGoogle, logout, isAdmin, isSuperAdmin } f
 import Dashboard from './components/Dashboard.vue';
 import AdminManager from './components/AdminManager.vue';
 import RosterEditor from './components/RosterEditor.vue';
+import HistoryView from './components/HistoryView.vue';
 import ShiftModal from './components/ShiftModal.vue';
+import GlobalModal from './components/GlobalModal.vue';
+import GlobalToast from './components/GlobalToast.vue';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 onMounted(() => {

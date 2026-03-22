@@ -96,10 +96,10 @@
         <div class="card shadow-sm border-0 rounded-4 h-100 d-flex flex-column overflow-hidden">
           <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center p-3 border-0">
              <h2 class="h6 fw-bold mb-0"><span class="me-2">📜</span>最近 5 筆紀錄</h2>
-             <span class="badge bg-secondary rounded-pill">{{ state.history.length }}/5</span>
+             <button @click="state.activeTab = 'history'" class="btn btn-sm btn-outline-light border-0 py-0 px-2 fw-bold" style="font-size: 11px;">查看更多 →</button>
           </div>
           <div class="card-body bg-light flex-grow-1 overflow-auto p-3 d-flex flex-column gap-2" style="background-color: #f8f9fa;">
-             <div v-for="item in state.history" :key="item.id" class="mb-2">
+             <div v-for="item in state.history.slice(0, 5)" :key="item.id" class="mb-2">
                <!-- 編輯模式 -->
                <div v-if="editingHistoryId === item.id" class="bg-white p-3 border border-warning rounded-3 shadow-sm">
                  <div class="mb-2">
@@ -231,18 +231,23 @@ const completeCurrentShift = async () => {
   // 自動找出此組別的代班法師 (自己是 debtor, 別人是 creditor 且尚未圓滿)
   const currentSubs = state.debts
     .filter(d => !d.isSettled && currentGroup.value.members.includes(d.debtor))
-    .map(d => d.creditor);
+    .map(d => ({
+      creditor: d.creditor,
+      debtor: d.debtor,
+      period: d.period || '午齋'
+    }));
     
   const record = {
     id: Date.now(),
     date: new Date().toISOString().split('T')[0], // YYYY-MM-DD
     groupId: currentGroup.value.id,
     members: currentGroup.value.members.join(", "),
-    substitutes: [...new Set(currentSubs)].join(", "),
+    substitutesList: currentSubs,
+    substitutes: currentSubs.map(s => `${s.creditor}代${s.debtor}(${s.period})`).join(", "),
     shiftPeriods: []
   };
   state.history.unshift(record);
-  if (state.history.length > 5) state.history = state.history.slice(0, 5);
+  // 不再此處限制 5 筆，讓 HistoryView 可以查看全部
   state.currentGroupIndex = (state.currentGroupIndex + 1) % state.groups.length;
   await syncToCloud();
 };

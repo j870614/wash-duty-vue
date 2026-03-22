@@ -24,7 +24,9 @@ export const state = reactive({
   user: null,
   isSyncing: false,
   activeTab: 'dashboard',
-  syncStatusText: '連線中...'
+  syncStatusText: '連線中...',
+  modal: { show: false, title: '', message: '', type: 'info', onConfirm: null },
+  toast: { show: false, message: '', type: 'success' }
 });
 
 export const isSuperAdmin = computed(() => {
@@ -91,8 +93,10 @@ export const syncToCloud = async () => {
       admins: JSON.parse(JSON.stringify(state.admins))
     });
     state.syncStatusText = "✅ 已即時同步";
+    showToast("資料已同步到雲端");
   } catch (error) {
     state.syncStatusText = "⚠️ 上傳失敗";
+    showToast("同步失敗", "danger");
   } finally {
     state.isSyncing = false;
   }
@@ -145,6 +149,7 @@ export const loginWithGoogle = async () => {
   if (!auth) return;
   state.syncStatusText = "登入中...";
   const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: 'select_account' });
   try {
     await signInWithPopup(auth, provider);
   } catch (error) {
@@ -164,4 +169,17 @@ export const logout = async () => {
     console.error("登出失敗:", error);
     state.syncStatusText = "登出失敗";
   }
+};
+
+export const showAlert = (title, message, type = 'info') => {
+  state.modal = { show: true, title, message, type, onConfirm: null };
+};
+
+export const showConfirm = (title, message, onConfirm) => {
+  state.modal = { show: true, title, message, type: 'warning', onConfirm };
+};
+
+export const showToast = (message, type = 'success') => {
+  state.toast = { show: true, message, type };
+  setTimeout(() => { state.toast.show = false; }, 3000);
 };

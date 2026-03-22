@@ -65,7 +65,7 @@
 
 <script setup>
 import { ref } from 'vue';
-import { state, syncToCloud, isAdmin } from '../store.js';
+import { state, syncToCloud, isAdmin, showConfirm } from '../store.js';
 
 const isEditMode = ref(false);
 const draftGroups = ref([]);
@@ -76,13 +76,13 @@ const startEdit = () => {
 };
 
 const cancelEdit = () => {
-  if (confirm("確定要放棄所有未儲存的變更嗎？")) {
+  showConfirm("取消編輯", "確定要放棄所有未儲存的變更嗎？", () => {
     isEditMode.value = false;
-  }
+  });
 };
 
 const saveEdit = async () => {
-  if (confirm("確定要儲存這份名單並覆寫雲端紀錄嗎？")) {
+  showConfirm("儲存變更", "確定要儲存這份名單並覆寫雲端紀錄嗎？", async () => {
     state.groups = JSON.parse(JSON.stringify(draftGroups.value));
     
     // 檢查 currentGroupIndex 是否超出範圍
@@ -92,7 +92,7 @@ const saveEdit = async () => {
     
     await syncToCloud();
     isEditMode.value = false;
-  }
+  });
 };
 
 const addNewGroup = () => {
@@ -101,9 +101,9 @@ const addNewGroup = () => {
 };
 
 const removeGroup = (gIdx) => {
-  if (confirm(`確定要刪除第 ${draftGroups.value[gIdx].id} 組嗎？這會刪除裡面所有成員！`)) {
+  showConfirm("刪除組別", `確定要刪除第 ${draftGroups.value[gIdx].id} 組嗎？這會刪除裡面所有成員！`, () => {
     draftGroups.value.splice(gIdx, 1);
-  }
+  });
 };
 
 const addMember = (gIdx) => {
