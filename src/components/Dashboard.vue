@@ -104,7 +104,7 @@
                <div v-if="editingHistoryId === item.id" class="bg-white p-3 border border-warning rounded-3 shadow-sm">
                  <div class="mb-2">
                    <label class="form-label small text-muted mb-1">值班日期</label>
-                   <input v-model="editData.date" class="form-control form-control-sm focus-ring focus-ring-warning">
+                   <input type="date" v-model="editData.date" class="form-control form-control-sm focus-ring focus-ring-warning">
                  </div>
                  <div class="mb-2">
                    <label class="form-label small text-muted mb-1">值班人員</label>
@@ -112,7 +112,16 @@
                  </div>
                  <div class="mb-2">
                    <label class="form-label small text-muted mb-1">實際代班 (若無可留空)</label>
-                   <input v-model="editData.substitutes" class="form-control form-control-sm focus-ring focus-ring-warning" placeholder="例如：某某某">
+                   <div class="input-group input-group-sm mb-2">
+                     <input v-model="editData.substitutes" class="form-control focus-ring focus-ring-warning" placeholder="例如：某某某">
+                   </div>
+                   <label class="form-label small text-muted mb-1">代班時段 (多選)</label>
+                   <div class="d-flex flex-wrap gap-1">
+                     <template v-for="p in ['早齋', '午齋', '藥食', '整天']" :key="p">
+                       <input type="checkbox" class="btn-check" :id="'p-' + p" :value="p" v-model="editData.shiftPeriods" autocomplete="off">
+                       <label class="btn btn-outline-warning btn-sm py-0 px-2 fw-bold" :for="'p-' + p">{{ p }}</label>
+                     </template>
+                   </div>
                  </div>
                  <div class="d-flex justify-content-end gap-2 mt-3">
                    <button class="btn btn-sm btn-light border fw-bold" @click="editingHistoryId = null" :disabled="state.isSyncing">取消</button>
@@ -132,6 +141,7 @@
                  <div class="text-secondary small">輪值名單：{{ item.members }}</div>
                  <div v-if="item.substitutes" class="small mt-2 px-2 py-1 bg-warning bg-opacity-10 text-dark rounded border border-warning" style="border-style: dashed !important;">
                    <span class="fw-bold">🔀 實際代班：</span>{{ item.substitutes }}
+                   <span v-if="item.shiftPeriods?.length" class="ms-1 text-muted">({{ item.shiftPeriods.join('、') }})</span>
                  </div>
                </div>
              </div>
@@ -166,19 +176,35 @@ import Chart from 'chart.js/auto';
 import { state, syncToCloud, isAdmin } from '../store.js';
 
 const editingHistoryId = ref(null);
-const editData = reactive({ date: '', members: '', substitutes: '' });
+const editData = reactive({ date: '', members: '', substitutes: '', shiftPeriods: [] });
 
 const startEditHistory = (item) => {
   editingHistoryId.value = item.id;
-  editData.date = item.date || '';
+  
+  // 嘗試標準化日期格式供 <input type="date"> 使用
+  let d = item.date || '';
+  if (d && !d.includes('-')) {
+    // 如果是舊格式 "MM/DD HH:mm" 或其他，嘗試轉為今年 YYYY-MM-DD
+    const year = new Date().getFullYear();
+    const match = d.match(/(\d{1,2})\/(\d{1,2})/);
+    if (match) {
+      const m = match[1].padStart(2, '0');
+      const day = match[2].padStart(2, '0');
+      d = `${year}-${m}-${day}`;
+    }
+  }
+  
+  editData.date = d;
   editData.members = item.members || '';
   editData.substitutes = item.substitutes || '';
+  editData.shiftPeriods = Array.isArray(item.shiftPeriods) ? [...item.shiftPeriods] : [];
 };
 
 const saveHistory = async (item) => {
   item.date = editData.date.trim();
   item.members = editData.members.trim();
   item.substitutes = editData.substitutes.trim();
+  item.shiftPeriods = [...editData.shiftPeriods];
   await syncToCloud();
   editingHistoryId.value = null;
 };
@@ -201,12 +227,19 @@ const syncGroupChange = async (step) => {
 
 const completeCurrentShift = async () => {
   if (state.isSyncing || state.groups.length === 0) return;
+  
+  // 自動找出此組別的代班法師 (自己是 debtor, 別人是 creditor 且尚未圓滿)
+  const currentSubs = state.debts
+    .filter(d => !d.isSettled && currentGroup.value.members.includes(d.debtor))
+    .map(d => d.creditor);
+    
   const record = {
     id: Date.now(),
-    date: new Date().toLocaleString('zh-TW', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }),
+    date: new Date().toISOString().split('T')[0], // YYYY-MM-DD
     groupId: currentGroup.value.id,
     members: currentGroup.value.members.join(", "),
-    substitutes: ""
+    substitutes: [...new Set(currentSubs)].join(", "),
+    shiftPeriods: []
   };
   state.history.unshift(record);
   if (state.history.length > 5) state.history = state.history.slice(0, 5);
