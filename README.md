@@ -47,3 +47,14 @@ npm run dev
 # 編譯專案
 npm run build
 ```
+
+---
+
+### 常見問題：403 Permission Denied
+
+如果 Actions 執行失敗並出現 `Permission... denied to github-actions[bot]`，代表 Token 權限不足。
+
+我已在 `deploy.yml` 中加入了 `permissions: contents: write`。如果仍然失敗，請手動確認：
+1. 前往 **Settings** -> **Actions** -> **General**。
+2. 捲動到最下方的 **Workflow permissions**。
+3. 確保選擇了 **Read and write permissions** 並點擊 **Save**。
