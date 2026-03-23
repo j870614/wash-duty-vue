@@ -1,6 +1,20 @@
 <template>
-  <div class="container py-4 min-vh-100 bg-light font-noto">
-    <header class="d-flex flex-column flex-md-row justify-content-between align-items-center bg-white p-4 rounded-4 shadow-sm border mb-4">
+  <div class="container py-4 min-vh-100 bg-light font-noto d-flex flex-column">
+
+    <!-- Loading Screen -->
+    <div v-if="!state.isDataLoaded" class="m-auto text-center d-flex flex-column align-items-center justify-content-center flex-grow-1" style="min-height: 60vh;">
+      <div class="spinner-border text-warning mb-4 shadow-sm" role="status" style="width: 3.5rem; height: 3.5rem; border-width: 0.35rem;">
+        <span class="visually-hidden">載入中...</span>
+      </div>
+      <h2 class="h4 fw-bold text-dark mb-2">🍽️ 洗碗支援排班管理系統</h2>
+      <p class="text-secondary small bg-white px-3 py-1 rounded-pill shadow-sm border mt-1">
+        ⏳ 正在與雲端資料庫連線同步中...
+      </p>
+    </div>
+
+    <!-- Main Content -->
+    <template v-else>
+      <header class="d-flex flex-column flex-md-row justify-content-between align-items-center bg-white p-4 rounded-4 shadow-sm border mb-4">
       <div class="text-center text-md-start mb-3 mb-md-0" @click="state.activeTab = 'dashboard'" style="cursor: pointer;">
         <h1 class="h3 fw-bold text-dark mb-1">🍽️ 洗碗支援排班管理系統</h1>
         <p class="text-secondary small mb-0">雲端互助版 — 紀錄即時同步，法緣長存</p>
@@ -50,6 +64,7 @@
     <ShiftModal />
     <GlobalModal />
     <GlobalToast />
+    </template>
   </div>
 </template>
 

@@ -23,6 +23,7 @@ export const state = reactive({
   modalTargetDebtor: null,
   user: null,
   isSyncing: false,
+  isDataLoaded: false,
   activeTab: 'dashboard',
   syncStatusText: '連線中...',
   modal: { show: false, title: '', message: '', type: 'info', onConfirm: null },
@@ -117,13 +118,18 @@ const startListening = () => {
     } else {
       syncToCloud();
     }
+    state.isDataLoaded = true;
   }, () => {
     state.syncStatusText = "⚠️ 同步錯誤";
+    state.isDataLoaded = true;
   });
 };
 
 export const initFirebase = async () => {
-  if (!auth) return;
+  if (!auth) {
+    state.isDataLoaded = true;
+    return;
+  }
   onAuthStateChanged(auth, (user) => {
     state.user = user;
     if (user) {
