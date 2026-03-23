@@ -29,20 +29,11 @@
           <button v-if="state.user && !state.user.isAnonymous" @click="logout" class="btn btn-sm btn-outline-danger">登出</button>
           <button v-else @click="loginWithGoogle" class="btn btn-sm btn-outline-primary">管理員登入</button>
         </div>
-        <nav class="d-flex gap-4 fw-bold">
-          <button v-if="isAdmin"
+        <nav class="d-flex gap-3 gap-md-4 fw-bold overflow-auto text-nowrap w-100 justify-content-start justify-content-md-end pb-1" style="-webkit-overflow-scrolling: touch;">
+          <button 
             class="btn btn-link text-decoration-none px-0 pb-1"
             :class="state.activeTab === 'dashboard' ? 'active-tab' : 'text-secondary'"
-            @click="state.activeTab = 'dashboard'">即時排班</button>
-            
-          <button v-if="isSuperAdmin"
-            class="btn btn-link text-decoration-none px-0 pb-1"
-            :class="state.activeTab === 'admin' ? 'active-tab' : 'text-secondary'"
-            @click="state.activeTab = 'admin'">權限管理</button>
-            
-          <button v-if="!isAdmin && state.activeTab === 'roster'"
-            class="btn btn-link text-decoration-none px-0 pb-1 text-primary"
-            @click="state.activeTab = 'dashboard'">← 回到即時排班</button>
+            @click="state.activeTab = 'dashboard'">主畫面</button>
 
           <button 
             class="btn btn-link text-decoration-none px-0 pb-1"
@@ -53,6 +44,11 @@
             class="btn btn-link text-decoration-none px-0 pb-1"
             :class="state.activeTab === 'roster' ? 'active-tab' : 'text-secondary'"
             @click="state.activeTab = 'roster'">組別名單</button>
+            
+          <button v-if="isSuperAdmin"
+            class="btn btn-link text-decoration-none px-0 pb-1"
+            :class="state.activeTab === 'admin' ? 'active-tab' : 'text-secondary'"
+            @click="state.activeTab = 'admin'">權限管理</button>
         </nav>
       </div>
     </header>

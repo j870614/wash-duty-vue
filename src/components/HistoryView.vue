@@ -6,9 +6,6 @@
           <h2 class="h4 fw-bold mb-1">📜 完整值班紀錄</h2>
           <p class="mb-0 text-white-50 small">查詢與管理歷年值班與互助資料</p>
         </div>
-        <div class="d-flex gap-2">
-          <button @click="state.activeTab = 'dashboard'" class="btn btn-outline-light btn-sm fw-bold">← 返回報到頁</button>
-        </div>
       </div>
     </div>
 
@@ -49,7 +46,7 @@
 
       <!-- Table -->
       <div class="table-responsive rounded-3 border bg-white shadow-sm">
-        <table class="table table-hover align-middle mb-0">
+        <table class="table table-hover align-middle mb-0 text-nowrap">
           <thead class="table-light">
             <tr>
               <th style="width: 120px;">日期</th>
@@ -102,7 +99,7 @@
 
 <script setup>
 import { ref, computed } from 'vue';
-import { state, isAdmin, syncToCloud } from '../store.js';
+import { state, isAdmin, syncToCloud, showConfirm } from '../store.js';
 
 const startDate = ref('');
 const endDate = ref('');

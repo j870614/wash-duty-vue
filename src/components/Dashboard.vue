@@ -9,15 +9,15 @@
     <div class="row g-3 mb-4">
       <div :class="isAdmin ? 'col-12 col-md-8' : 'col-12'">
         <!-- Giant Shift Indicator -->
-        <div class="bg-white p-4 rounded-4 shadow-sm border-start border-5 h-100 d-flex flex-column flex-sm-row align-items-center justify-content-center gap-4" style="border-color: #8b4513 !important;">
-          <button v-if="isAdmin" @click="syncGroupChange(-1)" class="btn btn-outline-secondary rounded-circle fw-bold fs-4 p-0 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px;">←</button>
+        <div class="bg-white p-3 p-sm-4 rounded-4 shadow-sm border-start border-5 h-100 d-flex flex-row align-items-center justify-content-center gap-2 gap-sm-4" style="border-color: #8b4513 !important;">
+          <button v-if="isAdmin" @click="syncGroupChange(-1)" class="btn btn-outline-secondary rounded-circle fw-bold fs-4 p-0 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 44px; height: 44px;">←</button>
           
-          <div class="text-center d-flex flex-column align-items-center justify-content-center">
-            <span class="d-block fw-bold text-muted mb-2" style="letter-spacing: 4px; font-size: 14px;">當前輪值組別</span>
-            <span class="fw-bold" style="font-size: 3.5rem; line-height: 1; color: #8b4513;">第 {{ currentGroup?.id || '?' }} 組</span>
+          <div class="text-center d-flex flex-column align-items-center justify-content-center mx-1 mx-sm-0">
+            <span class="d-block fw-bold text-muted mb-1 mb-sm-2" style="letter-spacing: 2px; font-size: 13px;">當前輪值組別</span>
+            <span class="fw-bold" style="font-size: 2.8rem; line-height: 1; color: #8b4513;">第 {{ currentGroup?.id || '?' }} 組</span>
           </div>
           
-          <button v-if="isAdmin" @click="syncGroupChange(1)" class="btn btn-outline-secondary rounded-circle fw-bold fs-4 p-0 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px;">→</button>
+          <button v-if="isAdmin" @click="syncGroupChange(1)" class="btn btn-outline-secondary rounded-circle fw-bold fs-4 p-0 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 44px; height: 44px;">→</button>
         </div>
       </div>
       
