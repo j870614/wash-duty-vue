@@ -3,16 +3,16 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
         <div class="modal-header border-0 pb-0" :class="headerClass">
-          <h5 class="modal-title fw-bold" :class="textClass">{{ state.modal.title }}</h5>
+          <h5 class="modal-title fw-bold" :class="textClass" :style="{ fontSize: 'var(--fs-name, 1.25rem)' }">{{ state.modal.title }}</h5>
           <button type="button" class="btn-close" @click="close"></button>
         </div>
-        <div class="modal-body py-4">
-          <p class="mb-0 fs-5 text-dark">{{ state.modal.message }}</p>
+        <div class="modal-body py-3">
+          <p class="mb-0 text-dark" :style="{ fontSize: 'var(--fs-main, 1.1rem)' }">{{ state.modal.message }}</p>
         </div>
         <div class="modal-footer border-0 pt-0">
-          <button v-if="state.modal.onConfirm" type="button" class="btn btn-light fw-bold px-4" @click="close">取消</button>
-          <button v-if="state.modal.onConfirm" type="button" class="btn fw-bold px-4" :class="btnClass" @click="confirm">確定</button>
-          <button v-else type="button" class="btn fw-bold px-4" :class="btnClass" @click="close">了解</button>
+          <button v-if="state.modal.onConfirm" type="button" class="btn btn-light fw-bold px-4" @click="close" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">取消</button>
+          <button v-if="state.modal.onConfirm" type="button" class="btn fw-bold px-4 shadow-sm" :class="btnClass" @click="confirm" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">確定</button>
+          <button v-else type="button" class="btn fw-bold px-4 shadow-sm" :class="btnClass" @click="close" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">了解</button>
         </div>
       </div>
     </div>

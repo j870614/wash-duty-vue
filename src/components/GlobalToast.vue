@@ -2,7 +2,7 @@
   <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 2500;">
     <div v-if="state.toast.show" class="toast show align-items-center border-0 shadow-lg rounded-3" :class="toastClass" role="alert" aria-live="assertive" aria-atomic="true">
       <div class="d-flex">
-        <div class="toast-body fw-bold py-3 px-4">
+        <div class="toast-body fw-bold py-3 px-4" :style="{ fontSize: 'var(--fs-main, 1rem)' }">
           {{ state.toast.message }}
         </div>
         <button type="button" class="btn-close btn-close-white me-2 m-auto" @click="state.toast.show = false"></button>

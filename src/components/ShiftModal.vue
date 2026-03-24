@@ -3,30 +3,31 @@
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable mx-auto my-auto p-3" style="max-width: 400px;">
       <div class="modal-content shadow-lg border-0 rounded-4 overflow-hidden">
         <div class="modal-header bg-light border-0 pb-0 d-flex flex-column align-items-start">
-          <h5 class="modal-title fw-bold text-dark">{{ isEditing ? '修改代班安排' : '安排慈悲代班' }}</h5>
-          <p class="text-muted small mt-1 mb-0">替 <span class="fw-bold text-warning">{{ state.modalTargetDebtor }}</span> 安排支援：</p>
+          <h5 class="modal-title fw-bold text-dark" :style="{ fontSize: 'var(--fs-name, 1.25rem)' }">{{ isEditing ? '修改代班安排' : '安排慈悲代班' }}</h5>
+          <p class="text-muted small mt-1 mb-0" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">替 <span class="fw-bold text-warning">{{ state.modalTargetDebtor }}</span> 安排支援：</p>
         </div>
         
         <!-- Step 1: Selection -->
         <div v-if="step === 1" class="modal-body custom-scrollbar">
           <div class="mb-3">
-            <label class="form-label small fw-bold text-muted mb-1">選擇代班時段：</label>
+            <label class="form-label small fw-bold text-muted mb-1" :style="{ fontSize: 'var(--fs-main, 0.85rem)' }">選擇代班時段：</label>
             <div class="d-flex flex-wrap gap-2">
               <template v-for="p in ['早齋', '午齋', '藥石', '整天']" :key="p">
                 <input type="checkbox" class="btn-check" :id="'m-p-' + p" :value="p" v-model="selectedPeriod" autocomplete="off">
-                <label class="btn btn-outline-warning btn-sm px-3 fw-bold" :for="'m-p-' + p">{{ p }}</label>
+                <label class="btn btn-outline-warning btn-sm px-3 fw-bold" :for="'m-p-' + p" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">{{ p }}</label>
               </template>
             </div>
           </div>
 
-          <label class="form-label small fw-bold text-muted mb-1">選擇代班人員：</label>
-          <input type="text" v-model="searchQuery" placeholder="搜尋姓名..." class="form-control mb-3 shadow-none border-secondary">
+          <label class="form-label small fw-bold text-muted mb-1" :style="{ fontSize: 'var(--fs-main, 0.85rem)' }">選擇代班人員：</label>
+          <input type="text" v-model="searchQuery" placeholder="搜尋姓名..." class="form-control mb-3 shadow-none border-secondary" :style="{ fontSize: 'var(--fs-main, 0.95rem)' }">
           <div class="row g-2">
             <div v-for="m in availableMembers" :key="m" class="col-6">
               <button 
                 class="btn w-100 text-truncate text-start"
                 :class="selectedCreditor === m ? 'btn-warning fw-bold text-dark border-warning shadow-sm' : 'btn-outline-secondary'"
-                @click="selectedCreditor = m">
+                @click="selectedCreditor = m"
+                :style="{ fontSize: 'var(--fs-name, 1rem)' }">
                 {{ m }}
               </button>
             </div>
@@ -36,32 +37,32 @@
         <!-- Step 2: Confirmation -->
         <div v-else-if="step === 2" class="modal-body">
           <div class="alert alert-warning border border-warning">
-            <h6 class="fw-bold mb-3 mt-1 text-center">請確認代班資訊</h6>
-            <div class="d-flex justify-content-between mb-2">
+            <h6 class="fw-bold mb-3 mt-1 text-center" :style="{ fontSize: 'var(--fs-name, 1.1rem)' }">請確認代班資訊</h6>
+            <div class="d-flex justify-content-between mb-2" :style="{ fontSize: 'var(--fs-main, 0.95rem)' }">
               <span class="text-muted small">正式值班：</span>
               <span class="fw-bold">{{ state.modalTargetDebtor }}</span>
             </div>
-            <div class="d-flex justify-content-between mb-2">
+            <div class="d-flex justify-content-between mb-2" :style="{ fontSize: 'var(--fs-main, 0.95rem)' }">
               <span class="text-muted small">代班人員：</span>
               <span class="fw-bold text-success">{{ selectedCreditor }}</span>
             </div>
-            <div class="d-flex justify-content-between mb-2">
+            <div class="d-flex justify-content-between mb-2" :style="{ fontSize: 'var(--fs-main, 0.95rem)' }">
               <span class="text-muted small">代班時段：</span>
               <span class="badge bg-dark">{{ selectedPeriod.join('、') }}</span>
             </div>
           </div>
-          <p class="text-center small text-muted mb-0">以上資訊正確無誤嗎？</p>
+          <p class="text-center small text-muted mb-0" :style="{ fontSize: 'var(--fs-main, 0.85rem)' }">以上資訊正確無誤嗎？</p>
         </div>
 
         <div class="modal-footer bg-light border-0 pt-2 border-top d-flex justify-content-between">
-          <button v-if="isEditing && isAdmin" type="button" class="btn btn-outline-danger btn-sm fw-bold me-auto" @click="cancelSubstitute" :disabled="state.isSyncing">🗑️ 取消代班</button>
+          <button v-if="isEditing && isAdmin" type="button" class="btn btn-outline-danger btn-sm fw-bold me-auto" @click="cancelSubstitute" :disabled="state.isSyncing" :style="{ fontSize: 'var(--fs-main, 0.85rem)' }">🗑️ 取消代班</button>
           
           <div class="d-flex gap-2 ms-auto">
-            <button v-if="step === 1" type="button" class="btn btn-light text-muted fw-bold" @click="closeModal" :disabled="state.isSyncing">取消</button>
-            <button v-if="step === 2" type="button" class="btn btn-light text-muted fw-bold" @click="step = 1" :disabled="state.isSyncing">返回修改</button>
+            <button v-if="step === 1" type="button" class="btn btn-light text-muted fw-bold" @click="closeModal" :disabled="state.isSyncing" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">取消</button>
+            <button v-if="step === 2" type="button" class="btn btn-light text-muted fw-bold" @click="step = 1" :disabled="state.isSyncing" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">返回修改</button>
             
-            <button v-if="step === 1" type="button" class="btn btn-primary fw-bold" @click="goToConfirm" :disabled="!selectedCreditor || selectedPeriod.length === 0">下一步：確認資訊 →</button>
-            <button v-if="step === 2" type="button" class="btn btn-success fw-bold px-4 shadow-sm" @click="saveDebt" :disabled="state.isSyncing">✅ 確認儲存</button>
+            <button v-if="step === 1" type="button" class="btn btn-primary fw-bold" @click="goToConfirm" :disabled="!selectedCreditor || selectedPeriod.length === 0" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">下一步：確認資訊 →</button>
+            <button v-if="step === 2" type="button" class="btn btn-success fw-bold px-4 shadow-sm" @click="saveDebt" :disabled="state.isSyncing" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">✅ 確認儲存</button>
           </div>
         </div>
       </div>

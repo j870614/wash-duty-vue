@@ -1,9 +1,9 @@
 <template>
-  <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
-    <div class="card-header bg-dark text-white p-4">
+  <div class="card shadow-sm border-0 rounded-4 overflow-hidden transition-all hover-border">
+    <div class="card-header border-0 p-4" style="background: linear-gradient(135deg, #212529 0%, #424951 100%);">
       <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
         <div>
-          <h2 class="h4 fw-bold mb-1">📜 完整值班紀錄</h2>
+          <h2 class="h4 fw-bold mb-1 text-white">📜 完整值班紀錄</h2>
           <p class="mb-0 text-white-50 small">查詢與管理歷年值班與互助資料</p>
         </div>
       </div>

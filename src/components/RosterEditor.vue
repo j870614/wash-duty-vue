@@ -1,9 +1,11 @@
 <template>
-  <div class="card shadow-sm border-0">
-    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center p-4">
-      <div>
-        <h2 class="h4 fw-bold mb-0">👥 組別與成員名單</h2>
-        <p class="text-secondary small mb-0 mt-1">您可以隨時查看各組成員。管理員可進入編輯模式進行修改。</p>
+  <div class="card shadow-sm border-0 rounded-4 overflow-hidden transition-all hover-border">
+    <div class="card-header border-0 p-4" style="background: linear-gradient(135deg, #212529 0%, #424951 100%);">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div>
+          <h2 class="h4 fw-bold mb-0 text-white">👥 組別與成員名單</h2>
+          <p class="text-white-50 small mb-0 mt-1">您可以隨時查看各組成員。管理員可進入編輯模式進行修改。</p>
+        </div>
       </div>
       
       <div v-if="isAdmin" class="d-flex gap-2">
@@ -32,10 +34,10 @@
       </div>
       <div class="row g-4">
         <div v-for="(group, gIdx) in (isEditMode ? draftGroups : state.groups)" :key="group.id" class="col-12 col-md-6 col-lg-4">
-          <div class="bg-white border rounded shadow-sm p-3 border-top border-3 h-100" :class="isEditMode ? 'border-warning' : 'border-dark'">
+          <div class="bg-white border rounded shadow-sm p-3 border-top border-3 h-100 transition-all" :class="isEditMode ? 'border-warning' : 'border-dark'">
             <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
-              <span class="fw-bold fs-5 text-dark">第 {{ group.id }} 組</span>
-              <button v-if="isEditMode" @click="removeGroup(gIdx)" class="btn btn-sm btn-outline-danger fw-bold border-0 px-2">
+              <span class="fw-bold text-dark" :style="{ fontSize: 'var(--fs-name, 1.15rem)' }">第 {{ group.id }} 組</span>
+              <button v-if="isEditMode" @click="removeGroup(gIdx)" class="btn btn-sm btn-outline-danger fw-bold border-0 px-2" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">
                 🗑️ 刪除
               </button>
             </div>
@@ -45,15 +47,16 @@
                 <input v-if="isEditMode" type="text" 
                        :value="member" 
                        @input="updateMemberName(gIdx, mIdx, $event.target.value)"
-                       class="form-control form-control-sm border-warning shadow-none focus-ring focus-ring-warning">
-                <span v-else class="fw-bold text-dark px-2 fs-5"><span class="badge bg-secondary bg-opacity-10 text-dark me-2">👤</span> {{ member }}</span>
+                       class="form-control form-control-sm border-warning shadow-none focus-ring focus-ring-warning"
+                       :style="{ fontSize: 'var(--fs-name, 1rem)' }">
+                <span v-else class="fw-bold text-dark px-2" :style="{ fontSize: 'var(--fs-name, 1rem)' }"><span class="badge bg-secondary bg-opacity-10 text-dark me-2">👤</span> {{ member }}</span>
                 
                 <button v-if="isEditMode" @click="removeMember(gIdx, mIdx)" class="btn btn-sm btn-link text-danger text-decoration-none fw-bold p-0 px-1">✕</button>
               </div>
-              <div v-if="group.members.length === 0" class="text-muted small fst-italic text-center py-2">無成員</div>
+              <div v-if="group.members.length === 0" class="text-muted small fst-italic text-center py-2" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">無成員</div>
             </div>
             
-            <button v-if="isEditMode" @click="addMember(gIdx)" class="btn btn-sm btn-outline-warning w-100 fw-bold border-dashed text-dark">
+            <button v-if="isEditMode" @click="addMember(gIdx)" class="btn btn-sm btn-outline-warning w-100 fw-bold border-dashed text-dark" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">
               ➕ 增加成員
             </button>
           </div>

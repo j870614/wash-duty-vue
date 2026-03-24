@@ -36,36 +36,43 @@
     <!-- Official & Compensation -->
     <div class="row g-4 mb-4">
       <div class="col-12 col-md-6">
-        <div class="card h-100 shadow-sm border-0 rounded-4 overflow-hidden">
-          <div class="card-header bg-light border-bottom fw-bold text-dark p-3">
-            <span class="fs-5 me-2">📋</span> 本次正式值班名單
+        <div class="card shadow-sm border-0 rounded-4 overflow-hidden transition-all hover-border h-100">
+          <div class="card-header bg-white border-0 p-4 pb-2" style="background: linear-gradient(135deg, #fff5ec 0%, #ffffff 100%);">
+            <div class="d-flex align-items-center fw-bold text-dark" :style="{ fontSize: 'var(--fs-name, 1.25rem)' }">
+              <span class="fs-5 me-2">📋</span> 本次正式值班名單
+            </div>
           </div>
           <div class="card-body d-flex flex-column gap-3 p-4">
-            <div v-for="member in currentGroup?.members" :key="member" class="d-flex justify-content-between align-items-center p-3 bg-white rounded-3 border">
-              <div>
+            <div v-for="member in currentGroup?.members" :key="member" class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center p-3 bg-white rounded-3 border gap-3">
+              <div class="w-100">
                 <span class="fw-bold d-flex align-items-center gap-2 text-dark" :style="{ fontSize: 'var(--fs-name, 1rem)' }">
                   <span class="badge bg-secondary bg-opacity-25 text-dark rounded-circle p-2">👤</span> {{ member }}
                 </span>
-                <div v-if="getActiveSubstitute(member)" class="mt-1 text-muted ms-3 ps-4" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">
+                <div v-if="getActiveSubstitute(member)" class="mt-2 text-muted px-2 py-1 bg-light rounded-2 border ms-4" :style="{ fontSize: 'var(--fs-main, 0.9rem)', display: 'inline-block' }">
                   <span class="fw-bold text-success">{{ getActiveSubstitute(member).creditor }}</span> 代 {{ member }}
-                  <span class="badge bg-light text-dark border ms-1">{{ getActiveSubstitute(member).period }}</span>
+                  <span class="badge bg-white text-dark border ms-2">{{ getActiveSubstitute(member).period }}</span>
                 </div>
               </div>
-              <button v-if="getActiveSubstitute(member)" class="btn btn-sm btn-outline-primary fw-bold bg-white" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }" @click="state.modalTargetDebtor = member">
-                ✏️ 編輯代班
-              </button>
-              <button v-else class="btn btn-sm btn-outline-secondary fw-bold bg-white" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }" @click="state.modalTargetDebtor = member">
-                ➕ 安排代班
-              </button>
+              <div class="w-100 d-sm-flex justify-content-sm-end" style="max-width: fit-content; min-width: 100px;" :class="{ 'ms-auto': false }"> 
+                <!-- 在手機版按鈕佔全寬，sm以上自適應 -->
+                <button v-if="getActiveSubstitute(member)" class="btn btn-sm btn-outline-primary fw-bold bg-white w-100" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }" @click="state.modalTargetDebtor = member">
+                  ✏️ 編輯代班
+                </button>
+                <button v-else class="btn btn-sm btn-outline-secondary fw-bold bg-white w-100" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }" @click="state.modalTargetDebtor = member">
+                  ➕ 安排代班
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       <div class="col-12 col-md-6">
-        <div class="card h-100 shadow-sm border-0 rounded-4 overflow-hidden">
-          <div class="card-header bg-warning bg-opacity-10 border-bottom border-warning border-opacity-25 fw-bold p-3 text-warning-emphasis">
-            <span class="fs-5 me-2">🤝</span> 本次應回饋支援人員
+        <div class="card shadow-sm border-0 rounded-4 overflow-hidden transition-all hover-border h-100">
+          <div class="card-header border-0 p-4 pb-2" style="background: linear-gradient(135deg, #fff9db 0%, #ffffff 100%);">
+            <div class="d-flex align-items-center fw-bold text-dark" :style="{ fontSize: 'var(--fs-name, 1.25rem)' }">
+              <span class="fs-5 me-2">✨</span> 本次應回饋支援人員
+            </div>
           </div>
           <div class="card-body p-4">
             <div v-if="compensationList.length === 0" class="text-center text-muted p-5 border rounded-3 bg-light d-flex flex-column align-items-center h-100 justify-content-center" style="border-style: dashed !important;">
@@ -94,20 +101,20 @@
     <!-- Charts & Logs -->
     <div class="row g-4 mb-4">
       <div class="col-12 col-lg-8">
-        <div class="card shadow-sm border-0 rounded-4 p-4 h-100">
-          <h2 class="h5 fw-bold text-dark mb-4"><span class="fs-4 me-2">📊</span> 互助與值班數據統計</h2>
+        <div class="card shadow-sm border-0 rounded-4 p-4 h-100 transition-all hover-border">
+          <h2 class="h5 fw-bold text-dark mb-4" :style="{ fontSize: 'var(--fs-name, 1.25rem)' }"><span class="fs-4 me-2">📊</span> 互助與值班數據統計</h2>
           <div style="height: 300px; position: relative;" class="w-100">
             <canvas id="debtStatsChart"></canvas>
           </div>
         </div>
       </div>
       <div class="col-12 col-lg-4">
-        <div class="card shadow-sm border-0 rounded-4 h-100 d-flex flex-column overflow-hidden">
-          <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center p-3 border-0">
-             <h2 class="h6 fw-bold mb-0"><span class="me-2">📜</span>最近 5 筆紀錄</h2>
+        <div class="card shadow-sm border-0 rounded-4 h-100 d-flex flex-column overflow-hidden transition-all hover-border">
+          <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center p-3 border-0" style="background: linear-gradient(135deg, #212529 0%, #424951 100%);">
+             <h2 class="h6 fw-bold mb-0" :style="{ fontSize: 'var(--fs-name, 1rem)' }"><span class="me-2">📜</span>最近 5 筆紀錄</h2>
              <button @click="state.activeTab = 'history'" class="btn btn-sm btn-outline-light border-0 py-0 px-2 fw-bold" style="font-size: 11px;">查看更多 →</button>
           </div>
-          <div class="card-body bg-light flex-grow-1 overflow-auto p-3 d-flex flex-column gap-2" style="background-color: #f8f9fa;">
+          <div class="card-body bg-light flex-grow-1 overflow-auto p-3 d-flex flex-column gap-2 custom-scrollbar" style="background-color: #f8f9fa;">
              <div v-for="item in state.history.slice(0, 5)" :key="item.id" class="mb-2">
                <!-- 編輯模式 -->
                <div v-if="editingHistoryId === item.id" class="bg-white p-3 border border-warning rounded-4 shadow-sm">
@@ -180,11 +187,11 @@
     </div>
 
     <!-- pending debts -->
-    <section class="card shadow-sm border-0 rounded-4 p-4">
-      <h2 class="h5 fw-bold text-dark mb-4"><span class="fs-4 me-2">📝</span> 待圓滿互助紀錄清單</h2>
+    <section class="card shadow-sm border-0 rounded-4 p-4 transition-all hover-border">
+      <h2 class="h5 fw-bold text-dark mb-4" :style="{ fontSize: 'var(--fs-name, 1.25rem)' }"><span class="fs-4 me-2">📝</span> 待圓滿互助紀錄清單</h2>
       <div class="row g-3">
         <div v-if="pendingDebts.length === 0" class="col-12 text-center text-muted fst-italic py-4">目前無待圓滿的互助紀錄。</div>
-        <div v-for="d in pendingDebts" :key="d.id" class="col-6 col-md-4">
+        <div v-for="d in pendingDebts" :key="d.id" class="col-12 col-sm-6 col-lg-4">
           <div class="p-3 bg-light border rounded-3 shadow-sm d-flex flex-column align-items-center gap-2 h-100 text-center">
 
             <!-- 第一行：人員 + 箭頭（置中） -->

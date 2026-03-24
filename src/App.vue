@@ -20,31 +20,40 @@
         <p class="text-secondary small mb-0">雲端互助版 — 紀錄即時同步，法緣長存</p>
       </div>
       <div class="d-flex flex-column align-items-center align-items-md-end">
-        <div class="mb-3 d-flex align-items-center gap-2">
-          <!-- 管理員：頭像 or SVG icon + 名字 + ADMIN pill -->
-          <template v-if="state.user && !state.user.isAnonymous">
-            <img v-if="state.user.photoURL" :src="state.user.photoURL" class="rounded-circle shadow-sm border border-2" style="border-color:#fd7e14;width:34px;height:34px;object-fit:cover" alt="Avatar">
-            <svg v-else xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fd7e14" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-            <span class="user-name-text">{{ state.user.displayName || state.user.email.split('@')[0] }}</span>
-            <span class="role-pill">管理員</span>
-          </template>
+        <div class="mb-3 d-flex flex-wrap justify-content-center justify-content-md-end align-items-center gap-2">
+          
+          <!-- 第一組：使用者身份 -->
+          <div class="d-flex align-items-center gap-2 bg-light px-3 py-1 rounded-pill border shadow-sm">
+            <!-- 管理員：頭像 or SVG icon + 名字 + ADMIN pill -->
+            <template v-if="state.user && !state.user.isAnonymous">
+              <img v-if="state.user.photoURL" :src="state.user.photoURL" class="rounded-circle shadow-sm border border-2" style="border-color:#fd7e14;width:28px;height:28px;object-fit:cover" alt="Avatar">
+              <svg v-else xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fd7e14" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+              <span class="user-name-text">{{ state.user.displayName || state.user.email.split('@')[0] }}</span>
+              <span class="role-pill">管理員</span>
+            </template>
 
-          <!-- 訪客：SVG icon + 訪客文字 -->
-          <template v-else>
-            <span class="user-badge user-badge--guest">
-              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-              訪客
-            </span>
-          </template>
-
-          <button v-if="state.user && !state.user.isAnonymous" @click="logout" class="btn btn-sm btn-outline-danger fw-bold shadow-sm px-3" style="white-space:nowrap">登出</button>
-          <button v-else @click="loginWithGoogle" class="btn btn-sm btn-primary fw-bold shadow-sm px-3" style="white-space:nowrap">管理員登入</button>
-
-          <!-- 字體縮放 -->
-          <div class="d-flex align-items-center gap-1 ms-1">
-            <button @click="changeFontScale(-1)" class="font-scale-btn" :disabled="fontScale <= 0" title="縮小字體">字-</button>
-            <button @click="changeFontScale(1)" class="font-scale-btn" :disabled="fontScale >= 2" title="放大字體">字+</button>
+            <!-- 訪客：SVG icon + 訪客文字 -->
+            <template v-else>
+              <span class="user-badge user-badge--guest border-0 px-0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                訪客
+              </span>
+            </template>
           </div>
+
+          <!-- 第二組：操作按鈕（登出/登入、字體縮放） -->
+          <div class="d-flex align-items-center gap-2">
+            <button v-if="state.user && !state.user.isAnonymous" @click="logout" class="btn btn-sm btn-outline-danger fw-bold shadow-sm px-3 rounded-pill" style="white-space:nowrap">登出</button>
+            <button v-else @click="loginWithGoogle" class="btn btn-sm btn-primary fw-bold shadow-sm px-3 rounded-pill" style="white-space:nowrap">管理員登入</button>
+
+            <!-- 字體縮放 -->
+            <div class="d-flex align-items-center gap-1 bg-white border px-2 py-1 rounded-pill shadow-sm">
+              <button @click="changeFontScale(-1)" class="font-scale-btn border-0 bg-transparent text-secondary p-1" :disabled="fontScale <= 0" title="縮小字體">字-</button>
+              <div class="text-secondary opacity-50 px-1">|</div>
+              <button @click="changeFontScale(1)" class="font-scale-btn border-0 bg-transparent text-secondary p-1" :disabled="fontScale >= 2" title="放大字體">字+</button>
+            </div>
+          </div>
+          
         </div>
         <nav class="d-flex gap-3 gap-md-4 fw-bold overflow-auto text-nowrap w-100 justify-content-center justify-content-md-end pb-2" style="-webkit-overflow-scrolling: touch;">
           <button 
@@ -111,68 +120,140 @@ onMounted(() => {
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
-.font-noto { font-family: 'Noto Sans TC', sans-serif; }
-.active-tab { border-bottom: 3px solid #fd7e14; color: #fd7e14 !important; }
-.custom-scrollbar::-webkit-scrollbar { width: 6px; }
-.custom-scrollbar::-webkit-scrollbar-track { background: #f8f9fa; }
-.custom-scrollbar::-webkit-scrollbar-thumb { background: #adb5bd; border-radius: 10px; }
+:root {
+  --bs-primary: #fd7e14;
+  --bs-primary-rgb: 253, 126, 20;
+  --fs-main: 1.1rem; /* 預設為最大的基礎字體 */
+  --fs-name: 1.25rem; /* 預設為最大的名字字體 */
+}
 
-/* 字體縮放（三段：data-fs=0/1/2） */
+/* 漸進式字體縮放定義 */
 [data-fs="0"] { --fs-main: 0.9rem; --fs-name: 1rem; }
-[data-fs="1"] { --fs-main: 1.05rem; --fs-name: 1.2rem; }
-[data-fs="2"] { --fs-main: 1.2rem; --fs-name: 1.4rem; }
+[data-fs="1"] { --fs-main: 1rem; --fs-name: 1.15rem; }
+[data-fs="2"] { --fs-main: 1.1rem; --fs-name: 1.25rem; }
 
-/* 縮放按鈕 */
+body {
+  background-color: #f0f2f5;
+  font-family: 'Noto Sans TC', sans-serif;
+  transition: background-color 0.3s ease;
+}
+
+.transition-all {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid rgba(0,0,0,0.05) !important;
+}
+
+.shadow-sm {
+  box-shadow: 0 4px 20px -5px rgba(0,0,0,0.08) !important;
+}
+
+.shadow-lg {
+  box-shadow: 0 20px 40px -15px rgba(0,0,0,0.15) !important;
+}
+
+.hover-border:hover {
+  border-color: #fd7e14 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px -5px rgba(253, 126, 20, 0.15) !important;
+}
+
+.btn {
+  transition: all 0.2s ease;
+  border-radius: 8px;
+}
+
+.btn:active {
+  transform: scale(0.96);
+}
+
 .font-scale-btn {
-  background: #f1f3f5;
-  border: 1.5px solid #dee2e6;
-  border-radius: 6px;
-  padding: 2px 8px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: #495057;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.15s;
-}
-.font-scale-btn:hover:not(:disabled) { background: #e9ecef; }
-.font-scale-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-
-/* 訪客標籤 */
-.user-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 12px;
-  border-radius: 999px;
-  font-size: 0.825rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-.user-badge--guest {
-  background: transparent;
-  color: #6c757d;
-  border: 1.5px solid #ced4da;
-}
-
-/* 管理員名字 */
-.user-name-text {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: #212529;
-  white-space: nowrap;
-}
-
-/* ADMIN role pill */
-.role-pill {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 0.65rem;
   font-weight: 800;
-  background: #fff3cd;
-  color: #b45309;
-  border: 1.5px solid #fd7e14;
-  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+}
+
+.font-scale-btn:hover:not(:disabled) {
+  color: #fd7e14 !important;
+  background-color: rgba(253, 126, 20, 0.05);
+}
+
+.font-scale-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.user-name-text {
+  font-weight: 700;
+  color: #444;
+  font-size: 0.95rem;
+}
+
+.role-pill {
+  font-size: 10px;
+  background: linear-gradient(135deg, #fd7e14 0%, #ff9e43 100%);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-weight: 900;
+  box-shadow: 0 2px 5px rgba(253, 126, 20, 0.2);
+}
+
+.user-badge--guest {
+  font-size: 13px;
+  font-weight: 600;
+  color: #888;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 導航按鈕動畫 */
+nav button {
+  position: relative;
+  border: none;
+  background: none;
+  padding-bottom: 4px;
+  color: #6c757d;
+  transition: color 0.3s;
+}
+
+nav button.active {
+  color: #fd7e14;
+}
+
+nav button::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  height: 3px;
+  background-color: #fd7e14;
+  transition: all 0.3s;
+  transform: translateX(-50%);
+  border-radius: 2px;
+}
+
+nav button.active::after {
+  width: 100%;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #ddd;
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #ccc;
 }
 </style>
