@@ -60,7 +60,7 @@
             <button v-if="step === 1" type="button" class="btn btn-light text-muted fw-bold" @click="closeModal" :disabled="state.isSyncing">取消</button>
             <button v-if="step === 2" type="button" class="btn btn-light text-muted fw-bold" @click="step = 1" :disabled="state.isSyncing">返回修改</button>
             
-            <button v-if="step === 1" type="button" class="btn btn-primary fw-bold" @click="goToConfirm" :disabled="!selectedCreditor || selectedPeriod.length === 0">前往確認</button>
+            <button v-if="step === 1" type="button" class="btn btn-primary fw-bold" @click="goToConfirm" :disabled="!selectedCreditor || selectedPeriod.length === 0">下一步：確認資訊 →</button>
             <button v-if="step === 2" type="button" class="btn btn-success fw-bold px-4 shadow-sm" @click="saveDebt" :disabled="state.isSyncing">✅ 確認儲存</button>
           </div>
         </div>
@@ -74,7 +74,7 @@ import { ref, computed, watch } from 'vue';
 import { state, syncToCloud, isAdmin } from '../store.js';
 
 const searchQuery = ref('');
-const selectedPeriod = ref(['午齋']);
+const selectedPeriod = ref([]);
 const selectedCreditor = ref(null);
 const step = ref(1);
 
@@ -94,7 +94,7 @@ watch(() => state.modalTargetDebtor, (newVal) => {
       selectedPeriod.value = existingDebt.value.period.split('、');
     } else {
       selectedCreditor.value = null;
-      selectedPeriod.value = ['午齋'];
+      selectedPeriod.value = [];
     }
   }
 });
@@ -171,7 +171,7 @@ const cancelSubstitute = async () => {
 const closeModal = () => {
   state.modalTargetDebtor = null;
   searchQuery.value = '';
-  selectedPeriod.value = ['午齋'];
+  selectedPeriod.value = [];
   selectedCreditor.value = null;
   step.value = 1;
 };

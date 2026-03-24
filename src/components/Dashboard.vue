@@ -184,43 +184,43 @@
       <h2 class="h5 fw-bold text-dark mb-4"><span class="fs-4 me-2">📝</span> 待圓滿互助紀錄清單</h2>
       <div class="row g-3">
         <div v-if="pendingDebts.length === 0" class="col-12 text-center text-muted fst-italic py-4">目前無待圓滿的互助紀錄。</div>
-        <div v-for="d in pendingDebts" :key="d.id" class="col-12 col-xl-6">
-          <div class="p-3 bg-light border rounded-3 shadow-sm d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 h-100">
-            
-            <!-- 左側：人員名單小卡 -->
-            <div class="d-flex align-items-center justify-content-center gap-2 bg-white px-3 py-2 rounded-3 border shadow-sm flex-fill flex-sm-grow-0" style="min-width: 240px;">
-              <div class="text-center" style="width: 70px;">
-                <div class="fw-bold fs-6" style="color: #fd7e14;">{{ d.debtor }}</div>
-                <div class="text-muted" style="font-size: 11px;">{{ getMemberGroup(d.debtor) }}</div>
+        <div v-for="d in pendingDebts" :key="d.id" class="col-6 col-md-4">
+          <div class="p-3 bg-light border rounded-3 shadow-sm d-flex flex-column align-items-center gap-2 h-100 text-center">
+
+            <!-- 第一行：人員 + 箭頭（置中） -->
+            <div class="d-flex align-items-center justify-content-center gap-2 w-100">
+              <!-- 被代班人 -->
+              <div>
+                <div class="fw-bold" style="color: #fd7e14; font-size: 0.9rem;">{{ d.debtor }}</div>
+                <div class="text-muted" style="font-size: 10px;">{{ getMemberGroup(d.debtor) }}</div>
               </div>
-              
-              <div class="text-muted d-flex flex-column align-items-center px-1 flex-grow-1">
-                <span class="badge rounded-pill bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 mb-1" style="font-size: 12px; letter-spacing: 2px; padding: 3px 10px;">支援</span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-secondary opacity-75">
+
+              <!-- 箭頭 + 支援 -->
+              <div class="d-flex flex-column align-items-center" style="min-width:40px;">
+                <span class="badge rounded-pill bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 mb-1" style="font-size: 10px; padding: 1px 6px;">支援</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-secondary opacity-75">
                   <line x1="21" y1="12" x2="3" y2="12"></line>
                   <polyline points="9 18 3 12 9 6"></polyline>
                 </svg>
               </div>
-              
-              <div class="text-center" style="width: 70px;">
-                <div class="fw-bold text-success fs-6">{{ d.creditor }}</div>
-                <div class="text-muted" style="font-size: 11px;">{{ getMemberGroup(d.creditor) }}</div>
+
+              <!-- 代班人 -->
+              <div>
+                <div class="fw-bold text-success" style="font-size: 0.9rem;">{{ d.creditor }}</div>
+                <div class="text-muted" style="font-size: 10px;">{{ getMemberGroup(d.creditor) }}</div>
               </div>
             </div>
-            
-            <!-- 右側：時段/日期/按鈕 -->
-            <div class="d-flex flex-column align-items-center align-items-sm-end gap-2 w-100 w-sm-auto">
-              <!-- 標籤排成一行或視空間換行 -->
-              <div class="d-flex flex-row flex-wrap justify-content-center justify-content-sm-end align-items-center gap-2">
-                <span class="badge bg-warning bg-opacity-25 text-dark border border-warning px-2 py-1 fs-6 d-flex align-items-center" style="font-size: 13px !important; white-space: nowrap;">{{ d.period }}</span>
-                <span class="badge bg-white text-secondary border px-2 py-1 fs-6 d-flex align-items-center" style="font-size: 13px !important; white-space: nowrap;">📅 {{ d.dateCreated }}</span>
-              </div>
-              
-              <!-- 按鈕 -->
-              <div v-if="isAdmin" class="d-flex flex-row align-items-center justify-content-center justify-content-sm-end gap-2 w-100 mt-1 mt-sm-0 border-top border-sm-0 pt-2 pt-sm-0">
-                <button @click="editPendingDebt(d)" class="btn btn-sm btn-outline-primary py-1 px-3 bg-white fw-bold flex-fill flex-sm-grow-0">✏️ 編輯</button>
-                <button @click="deletePendingDebt(d.id)" class="btn btn-sm btn-outline-danger py-1 px-3 bg-white fw-bold flex-fill flex-sm-grow-0">🗑️ 刪除</button>
-              </div>
+
+            <!-- 第二行：時段 + 日期（置中） -->
+            <div class="d-flex flex-wrap justify-content-center align-items-center gap-1">
+              <span class="badge bg-warning bg-opacity-25 text-dark border border-warning px-2 py-1" style="font-size: 11px; white-space: nowrap;">{{ d.period }}</span>
+              <span class="badge bg-white text-secondary border px-2 py-1" style="font-size: 11px; white-space: nowrap;">{{ d.dateCreated }}</span>
+            </div>
+
+            <!-- 第三行：admin 按鈕（置中） -->
+            <div v-if="isAdmin" class="d-flex justify-content-center gap-2 border-top pt-2 w-100 mt-auto">
+              <button @click="editPendingDebt(d)" class="btn btn-sm btn-outline-primary py-1 px-2 bg-white fw-bold" style="font-size: 12px;">✏️ 編輯</button>
+              <button @click="deletePendingDebt(d.id)" class="btn btn-sm btn-outline-danger py-1 px-2 bg-white fw-bold" style="font-size: 12px;">🗑️ 刪除</button>
             </div>
 
           </div>

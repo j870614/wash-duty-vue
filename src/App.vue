@@ -21,16 +21,26 @@
       </div>
       <div class="d-flex flex-column align-items-center align-items-md-end">
         <div class="mb-3 d-flex align-items-center gap-2">
-          <img v-if="state.user && state.user.photoURL" :src="state.user.photoURL" class="rounded-circle shadow-sm border border-2 border-white" width="36" height="36" alt="Avatar">
-          <span v-if="state.user && !state.user.isAnonymous" class="badge bg-success fw-bold px-3 py-2 fs-6 shadow-sm">
-            {{ state.user.displayName || state.user.email.split('@')[0] }}
-          </span>
-          <span v-else class="badge bg-secondary px-3 py-2 fs-6 shadow-sm">👤 訪客 (匿名)</span>
-          
-          <button v-if="state.user && !state.user.isAnonymous" @click="logout" class="btn btn-sm btn-danger fw-bold shadow-sm px-3">登出</button>
-          <button v-else @click="loginWithGoogle" class="btn btn-sm btn-primary fw-bold shadow-sm px-3">管理員登入</button>
+          <!-- 管理員：頭像 or SVG icon + 名字 + ADMIN pill -->
+          <template v-if="state.user && !state.user.isAnonymous">
+            <img v-if="state.user.photoURL" :src="state.user.photoURL" class="rounded-circle shadow-sm border border-2" style="border-color:#fd7e14;width:34px;height:34px;object-fit:cover" alt="Avatar">
+            <svg v-else xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fd7e14" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+            <span class="user-name-text">{{ state.user.displayName || state.user.email.split('@')[0] }}</span>
+            <span class="role-pill">管理員</span>
+          </template>
+
+          <!-- 訪客：SVG icon + 訪客文字 -->
+          <template v-else>
+            <span class="user-badge user-badge--guest">
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+              訪客
+            </span>
+          </template>
+
+          <button v-if="state.user && !state.user.isAnonymous" @click="logout" class="btn btn-sm btn-outline-danger fw-bold shadow-sm px-3" style="white-space:nowrap">登出</button>
+          <button v-else @click="loginWithGoogle" class="btn btn-sm btn-primary fw-bold shadow-sm px-3" style="white-space:nowrap">管理員登入</button>
         </div>
-        <nav class="d-flex gap-3 gap-md-4 fw-bold overflow-auto text-nowrap w-100 justify-content-start justify-content-md-end pb-2 pe-3 me-n3" style="-webkit-overflow-scrolling: touch;">
+        <nav class="d-flex gap-3 gap-md-4 fw-bold overflow-auto text-nowrap w-100 justify-content-center justify-content-md-end pb-2" style="-webkit-overflow-scrolling: touch;">
           <button 
             class="btn btn-link text-decoration-none px-0 pb-1"
             :class="state.activeTab === 'dashboard' ? 'active-tab' : 'text-secondary'"
@@ -89,4 +99,42 @@ onMounted(() => {
 .custom-scrollbar::-webkit-scrollbar { width: 6px; }
 .custom-scrollbar::-webkit-scrollbar-track { background: #f8f9fa; }
 .custom-scrollbar::-webkit-scrollbar-thumb { background: #adb5bd; border-radius: 10px; }
+
+/* 訪客標籤 */
+.user-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.825rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.user-badge--guest {
+  background: transparent;
+  color: #6c757d;
+  border: 1.5px solid #ced4da;
+}
+
+/* 管理員名字 */
+.user-name-text {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #212529;
+  white-space: nowrap;
+}
+
+/* ADMIN role pill */
+.role-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  background: #fff3cd;
+  color: #b45309;
+  border: 1.5px solid #fd7e14;
+  white-space: nowrap;
+}
 </style>
