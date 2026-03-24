@@ -110,31 +110,51 @@
           <div class="card-body bg-light flex-grow-1 overflow-auto p-3 d-flex flex-column gap-2" style="background-color: #f8f9fa;">
              <div v-for="item in state.history.slice(0, 5)" :key="item.id" class="mb-2">
                <!-- 編輯模式 -->
-               <div v-if="editingHistoryId === item.id" class="bg-white p-3 border border-warning rounded-3 shadow-sm">
-                 <div class="mb-2">
-                   <label class="form-label small text-muted mb-1">值班日期</label>
+               <div v-if="editingHistoryId === item.id" class="bg-white p-3 border border-warning rounded-4 shadow-sm">
+                 <div class="mb-3">
+                   <label class="form-label small text-muted mb-1 fw-bold">📅 值班日期</label>
                    <CustomDatePicker v-model="editData.date" />
                  </div>
-                 <div class="mb-2">
-                   <label class="form-label small text-muted mb-1">值班人員</label>
-                   <input v-model="editData.members" class="form-control form-control-sm focus-ring focus-ring-warning">
-                 </div>
-                 <div class="mb-2">
-                   <label class="form-label small text-muted mb-1">實際代班 (若無可留空)</label>
-                   <div class="input-group input-group-sm mb-2">
-                     <input v-model="editData.substitutes" class="form-control focus-ring focus-ring-warning" placeholder="例如：某某某">
-                   </div>
-                   <label class="form-label small text-muted mb-1">代班時段 (多選)</label>
-                   <div class="d-flex flex-wrap gap-1">
-                     <template v-for="p in ['早齋', '午齋', '藥食', '整天']" :key="p">
-                       <input type="checkbox" class="btn-check" :id="'p-' + p" :value="p" v-model="editData.shiftPeriods" autocomplete="off">
-                       <label class="btn btn-outline-warning btn-sm py-0 px-2 fw-bold" :for="'p-' + p">{{ p }}</label>
-                     </template>
+                 
+                 <!-- 值班組別卡片 -->
+                 <div class="mb-3">
+                   <label class="form-label small text-muted mb-1 fw-bold">👥 值班組別</label>
+                   <div class="d-flex align-items-center justify-content-between p-2 border rounded-3 bg-light shadow-sm">
+                     <button @click="changeEditGroup(-1)" class="btn btn-sm btn-outline-secondary py-0 px-2 fw-bold text-dark border-0 fs-5">←</button>
+                     <div class="text-center">
+                       <span class="fw-bold d-block fs-6 mb-1" style="color: #8b4513;">第 {{ editData.groupId }} 組</span>
+                       <span class="small text-muted">{{ getGroupMembers(editData.groupId) }}</span>
+                     </div>
+                     <button @click="changeEditGroup(1)" class="btn btn-sm btn-outline-secondary py-0 px-2 fw-bold text-dark border-0 fs-5">→</button>
                    </div>
                  </div>
-                 <div class="d-flex justify-content-end gap-2 mt-3">
-                   <button class="btn btn-sm btn-light border fw-bold" @click="editingHistoryId = null" :disabled="state.isSyncing">取消</button>
-                   <button class="btn btn-sm btn-warning fw-bold text-dark" @click="saveHistory(item)" :disabled="state.isSyncing">💾 儲存</button>
+
+                 <!-- 代班按鈕與顯示 -->
+                 <div class="mb-3">
+                   <div class="d-flex justify-content-between align-items-center mb-2">
+                     <label class="form-label small text-muted mb-0 fw-bold">🔀 代班紀錄</label>
+                     <button @click="openSubEditModal" class="btn btn-sm btn-outline-primary py-0 px-3 rounded-pill fw-bold shadow-sm border-2">✏️ 安排代班</button>
+                   </div>
+                   <div class="p-2 border rounded-3 bg-light shadow-sm">
+                     <div v-if="editData.substitutesList && editData.substitutesList.length > 0" class="d-flex flex-column gap-2">
+                       <div v-for="(sub, i) in editData.substitutesList" :key="i" class="small bg-white p-2 border rounded-3 d-flex flex-column justify-content-center align-items-center shadow-sm text-center">
+                         <div class="fw-bold d-flex align-items-center gap-2">
+                           <span class="text-success fs-6">{{ sub.creditor }}</span> 
+                           <span class="text-muted" style="font-size: 11px;">支援</span> 
+                           <span class="text-dark fs-6">{{ sub.debtor }}</span>
+                         </div>
+                         <div class="mt-1">
+                           <span class="badge bg-warning bg-opacity-25 text-dark border border-warning">{{ sub.period }}</span>
+                         </div>
+                       </div>
+                     </div>
+                     <div v-else class="text-center small text-muted py-3 fst-italic">— 無代班紀錄 —</div>
+                   </div>
+                 </div>
+
+                 <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                   <button class="btn btn-light border fw-bold px-4 rounded-3 shadow-sm" @click="editingHistoryId = null" :disabled="state.isSyncing">取消</button>
+                   <button class="btn btn-warning fw-bold text-dark px-4 shadow-sm rounded-3" @click="saveHistory(item)" :disabled="state.isSyncing">💾 儲存</button>
                  </div>
                </div>
 
@@ -207,17 +227,72 @@
         </div>
       </div>
     </section>
+
+    <!-- History Substitute Edit Modal -->
+    <div v-if="isSubEditModalOpen" class="position-fixed top-0 start-0 w-100 h-100 z-3 d-flex align-items-center justify-content-center" style="background-color: rgba(0,0,0,0.5); backdrop-filter: blur(2px); z-index: 1100;">
+      <div class="bg-white rounded-4 shadow-lg d-flex flex-column overflow-hidden position-relative w-100 m-3" style="max-width: 420px; max-height: 90vh;">
+        <div class="p-3 bg-light border-bottom d-flex justify-content-between align-items-center">
+          <h3 class="h5 m-0 fw-bold text-dark" style="color:#8b4513 !important;">✏️ 安排代班明細</h3>
+          <button @click="isSubEditModalOpen = false" class="btn btn-link text-decoration-none text-muted p-0 fs-4 lh-1">✕</button>
+        </div>
+        
+        <div class="p-3 overflow-auto custom-scrollbar flex-grow-1" style="background-color: #f8f9fa;">
+          <!-- List of current substitutes -->
+          <div v-for="(sub, idx) in editData.substitutesList" :key="idx" class="mb-3 p-3 border border-warning border-opacity-50 rounded-4 bg-white position-relative shadow-sm">
+            <button @click="removeSubEdit(idx)" class="btn btn-sm btn-outline-danger position-absolute top-0 end-0 m-2 rounded-circle py-0 px-2 fw-bold border-0 bg-white" style="font-size: 14px;" title="移除">✕</button>
+            <div class="badge bg-warning text-dark mb-3">代班 #{{ idx + 1 }}</div>
+            
+            <div class="mb-3">
+              <label class="form-label small fw-bold mb-1 text-success">🙋‍♂️ 支援者 (來代班的人)</label>
+              <select class="form-select form-select-sm bg-success bg-opacity-10 border-success" v-model="sub.creditor">
+                <option value="" disabled>請選擇</option>
+                <optgroup v-for="g in state.groups" :key="'c'+g.id" :label="'第 ' + g.id + ' 組'">
+                  <option v-for="m in g.members" :key="m" :value="m">{{ m }}</option>
+                </optgroup>
+              </select>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label small fw-bold mb-1 text-dark">🙏 被代班者 (原本負責的人)</label>
+              <select class="form-select form-select-sm bg-light" v-model="sub.debtor">
+                <option value="" disabled>請選擇</option>
+                <option v-for="m in editData.members.split(', ')" :key="'d'+m" :value="m">{{ m }}</option>
+              </select>
+            </div>
+            
+            <div>
+              <label class="form-label small fw-bold mb-2">⏱ 代班時段 (可複選，自動轉換整天)</label>
+              <div class="d-flex flex-wrap gap-2">
+                <template v-for="p in ['早齋', '午齋', '藥石', '整天']" :key="p+idx">
+                  <input type="checkbox" :id="'p'+idx+p" :value="p" v-model="sub.periodArray" @change="handlePeriodChange(sub, p)" class="btn-check">
+                  <label class="btn btn-outline-warning btn-sm py-1 px-3 fw-bold rounded-pill" :for="'p'+idx+p">{{ p }}</label>
+                </template>
+              </div>
+            </div>
+          </div>
+          
+          <button @click="addSubEdit" class="btn btn-outline-primary w-100 fw-bold border-2 py-3 rounded-4 shadow-sm bg-white mt-1 d-flex align-items-center justify-content-center gap-2">
+            <span class="fs-4 lh-1">＋</span> 新增一筆代班紀錄
+          </button>
+        </div>
+        
+        <div class="p-3 border-top bg-white mt-auto">
+          <button @click="isSubEditModalOpen = false" class="btn btn-warning w-100 fw-bold shadow-sm py-2 rounded-3 fs-5">✔️ 確定並回到上一頁</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { computed, watch, onMounted, nextTick, ref, reactive } from 'vue';
 import Chart from 'chart.js/auto';
-import { state, syncToCloud, isAdmin } from '../store.js';
+import { state, syncToCloud, isAdmin, showConfirm } from '../store.js';
 import CustomDatePicker from './CustomDatePicker.vue';
 
 const editingHistoryId = ref(null);
-const editData = reactive({ date: '', members: '', substitutes: '', shiftPeriods: [] });
+const isSubEditModalOpen = ref(false);
+const editData = reactive({ date: '', groupId: 1, members: '', substitutesList: [] });
 
 const getActiveSubstitute = (member) => {
   return state.debts.find(d => !d.isSettled && d.debtor === member && currentGroup.value?.members.includes(d.debtor));
@@ -228,14 +303,75 @@ const getMemberGroup = (member) => {
   return g ? `第 ${g.id} 組` : '無組別';
 };
 
+const getGroupMembers = (gid) => {
+  const g = state.groups.find(x => x.id === gid);
+  return g ? g.members.join(', ') : '';
+};
+
+const changeEditGroup = (step) => {
+  if (state.groups.length === 0) return;
+  let idx = state.groups.findIndex(g => g.id === editData.groupId);
+  if (idx === -1) idx = 0;
+  
+  idx += step;
+  if (idx < 0) idx = state.groups.length - 1;
+  if (idx >= state.groups.length) idx = 0;
+  
+  editData.groupId = state.groups[idx].id;
+  editData.members = state.groups[idx].members.join(', ');
+  
+  // 組別改變時，避免有對應不到病人的代班，過濾掉舊的 debtor
+  if (editData.substitutesList && editData.substitutesList.length) {
+    editData.substitutesList = editData.substitutesList.filter(s => editData.members.includes(s.debtor));
+  }
+};
+
+const openSubEditModal = () => {
+  isSubEditModalOpen.value = true;
+};
+
+const addSubEdit = () => {
+  if (!editData.substitutesList) {
+    editData.substitutesList = [];
+  }
+  editData.substitutesList.push({
+    creditor: '',
+    debtor: '',
+    period: '午齋',
+    periodArray: ['午齋']
+  });
+};
+
+const handlePeriodChange = (sub, changedValue) => {
+  if (!sub.periodArray) sub.periodArray = [];
+  const newVal = [...sub.periodArray];
+  
+  if (changedValue === '整天' && newVal.includes('整天')) {
+    sub.periodArray = ['整天'];
+  } else if (changedValue !== '整天' && newVal.includes('整天')) {
+    sub.periodArray = newVal.filter(p => p !== '整天');
+  } else {
+    const allMeals = ['早齋', '午齋', '藥石'];
+    if (allMeals.every(meal => newVal.includes(meal))) {
+      sub.periodArray = ['整天'];
+    }
+  }
+  // Sync string value for immediate UI consistency
+  sub.period = sub.periodArray.length > 0 ? sub.periodArray.join('、') : '';
+};
+
+const removeSubEdit = (idx) => {
+  editData.substitutesList.splice(idx, 1);
+};
+
 const deletePendingDebt = async (id) => {
-  if (confirm("確定要刪除這筆互助紀錄嗎？")) {
+  showConfirm("刪除互助紀錄", "確定要刪除這筆待圓滿的互助紀錄嗎？刪除後將無法復原。", async () => {
     const idx = state.debts.findIndex(d => d.id === id);
     if (idx !== -1) {
       state.debts.splice(idx, 1);
       await syncToCloud();
     }
-  }
+  });
 };
 
 const editPendingDebt = async (debt) => {
@@ -268,16 +404,36 @@ const startEditHistory = (item) => {
   }
   
   editData.date = d;
+  editData.groupId = item.groupId || 1;
   editData.members = item.members || '';
-  editData.substitutes = item.substitutes || '';
-  editData.shiftPeriods = Array.isArray(item.shiftPeriods) ? [...item.shiftPeriods] : [];
+  
+  let subList = [];
+  if (Array.isArray(item.substitutesList) && item.substitutesList.length > 0) {
+    subList = JSON.parse(JSON.stringify(item.substitutesList)).map(s => ({
+      ...s,
+      periodArray: s.period ? s.period.split('、') : ['午齋']
+    }));
+  }
+  editData.substitutesList = subList;
 };
 
 const saveHistory = async (item) => {
   item.date = editData.date.trim();
-  item.members = editData.members.trim();
-  item.substitutes = editData.substitutes.trim();
-  item.shiftPeriods = [...editData.shiftPeriods];
+  item.groupId = editData.groupId;
+  item.members = editData.members;
+  
+  const finalSubs = editData.substitutesList.map(s => {
+    const pStr = s.periodArray && s.periodArray.length > 0 ? s.periodArray.join('、') : (s.period || '午齋');
+    return {
+      creditor: s.creditor,
+      debtor: s.debtor,
+      period: pStr
+    };
+  });
+  
+  item.substitutesList = finalSubs;
+  item.substitutes = finalSubs.map(s => `${s.creditor}代${s.debtor}(${s.period})`).join("、");
+  
   await syncToCloud();
   editingHistoryId.value = null;
 };

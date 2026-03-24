@@ -9,68 +9,73 @@
       </slot>
     </div>
 
-    <!-- Fullscreen Modal -->
-    <div v-if="isOpen" class="datepicker-modal position-fixed top-0 start-0 w-100 h-100 d-flex flex-column z-3" style="background-color: #0b1c2c; z-index: 1060;">
-      
-      <!-- Header -->
-      <div class="p-3 text-white d-flex align-items-center justify-content-between border-bottom border-light border-opacity-10">
-        <h3 class="m-0 fs-5 fw-bold mx-auto ps-4">選擇日期</h3>
-        <button @click="closeModal" class="btn btn-link text-white text-decoration-none fs-4 p-0 lh-1">✕</button>
-      </div>
-
-      <!-- Weekdays -->
-      <div class="d-flex text-white p-2 border-bottom border-light border-opacity-10 shadow-sm" style="background-color: #0d2235;">
-        <div v-for="day in ['週日', '週一', '週二', '週三', '週四', '週五', '週六']" :key="day" class="flex-fill text-center small fw-bold">
-          {{ day }}
+    <!-- Backdrop & Modal -->
+    <div v-if="isOpen" class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="background-color: rgba(0,0,0,0.5); z-index: 1060; backdrop-filter: blur(2px);">
+      <!-- Modal Content -->
+      <div class="bg-white rounded-4 shadow-lg d-flex flex-column overflow-hidden position-relative" style="width: 90%; max-width: 380px; max-height: 85vh;">
+        
+        <!-- Header -->
+        <div class="p-3 bg-light text-dark d-flex align-items-center justify-content-between border-bottom">
+          <h3 class="m-0 fs-5 fw-bold mx-auto ps-4" style="color: #8b4513;">選擇日期</h3>
+          <button @click="closeModal" class="btn btn-link text-muted text-decoration-none fs-4 p-0 lh-1">✕</button>
         </div>
-      </div>
 
-      <!-- Calendar Body -->
-      <div class="flex-grow-1 overflow-auto p-3" style="padding-bottom: 100px;">
-        <div v-for="monthData in calendarMonths" :key="monthData.key" class="mb-4">
-          <div class="text-white text-center fw-bold mb-3 fs-5">{{ monthData.year }}年{{ monthData.month + 1 }}月</div>
-          <div class="d-flex flex-wrap">
-            <template v-for="(dayObj, index) in monthData.days" :key="index">
-              <div 
-                class="calendar-day-cell position-relative d-flex justify-content-center align-items-center mb-2"
-                style="width: 14.28%; height: 40px;"
-                :class="{ 
-                  'in-range': isRange && isInRange(dayObj.fullDate) && dayObj.day,
-                  'range-start': isRange && isStart(dayObj.fullDate) && dayObj.day,
-                  'range-end': isRange && isEnd(dayObj.fullDate) && dayObj.day
-                }">
-                <!-- Background highlight for range -->
-                <div v-if="isRange && isInRange(dayObj.fullDate) && dayObj.day" class="position-absolute w-100 h-100" style="background-color: rgba(253, 126, 20, 0.2); z-index: 1;"></div>
-                <div v-if="isRange && isStart(dayObj.fullDate) && dayObj.day && tempEnd" class="position-absolute w-50 h-100 end-0" style="background-color: rgba(253, 126, 20, 0.2); z-index: 1;"></div>
-                <div v-if="isRange && isEnd(dayObj.fullDate) && dayObj.day && tempStart" class="position-absolute w-50 h-100 start-0" style="background-color: rgba(253, 126, 20, 0.2); z-index: 1;"></div>
-                
-                <!-- Day Button -->
-                <button 
-                  v-if="dayObj.day"
-                  class="btn p-0 rounded-circle fw-bold d-flex align-items-center justify-content-center text-white border-0 z-2"
-                  style="width: 36px; height: 36px;"
-                  :style="isSelected(dayObj.fullDate) ? 'background-color: #f5a623; color: #000 !important;' : (isToday(dayObj.fullDate) ? 'border: 1px solid #f5a623;' : '')"
-                  @click="selectDate(dayObj.fullDate)"
-                >
-                  {{ dayObj.day }}
-                </button>
-              </div>
-            </template>
+        <!-- Weekdays -->
+        <div class="d-flex bg-white text-muted p-2 border-bottom shadow-sm z-2">
+          <div v-for="day in ['週日', '週一', '週二', '週三', '週四', '週五', '週六']" :key="day" class="flex-fill text-center small fw-bold">
+            {{ day }}
           </div>
         </div>
-      </div>
 
-      <!-- Footer -->
-      <div v-if="tempStart || tempSingle" class="position-absolute bottom-0 start-0 w-100 p-3 bg-white text-center shadow-lg rounded-top-4" style="z-index: 1070;">
-        <div class="text-dark fw-bold mb-2">{{ previewText }}</div>
-        <button 
-          class="btn text-white w-100 fw-bold py-2 rounded-3" 
-          style="background-color: #5a382c;"
-          @click="confirmSelection"
-          :disabled="isRange && (!tempStart || !tempEnd)"
-        >
-          確認
-        </button>
+        <!-- Calendar Body -->
+        <div class="flex-grow-1 overflow-auto p-3 bg-white position-relative">
+          <div v-for="monthData in calendarMonths" :key="monthData.key" class="mb-4">
+            <div class="text-dark text-center fw-bold mb-3 fs-6" style="color: #8b4513 !important;">{{ monthData.year }}年{{ monthData.month + 1 }}月</div>
+            <div class="d-flex flex-wrap">
+              <template v-for="(dayObj, index) in monthData.days" :key="index">
+                <div 
+                  class="calendar-day-cell position-relative d-flex justify-content-center align-items-center mb-2"
+                  style="width: 14.28%; height: 40px;"
+                  :class="{ 
+                    'in-range': isRange && isInRange(dayObj.fullDate) && dayObj.day,
+                    'range-start': isRange && isStart(dayObj.fullDate) && dayObj.day,
+                    'range-end': isRange && isEnd(dayObj.fullDate) && dayObj.day
+                  }">
+                  <!-- Background highlight for range -->
+                  <div v-if="isRange && isInRange(dayObj.fullDate) && dayObj.day" class="position-absolute w-100 h-100" style="background-color: rgba(253, 126, 20, 0.15); z-index: 1;"></div>
+                  <div v-if="isRange && isStart(dayObj.fullDate) && dayObj.day && tempEnd" class="position-absolute w-50 h-100 end-0" style="background-color: rgba(253, 126, 20, 0.15); z-index: 1;"></div>
+                  <div v-if="isRange && isEnd(dayObj.fullDate) && dayObj.day && tempStart" class="position-absolute w-50 h-100 start-0" style="background-color: rgba(253, 126, 20, 0.15); z-index: 1;"></div>
+                  
+                  <!-- Day Button -->
+                  <button 
+                    v-if="dayObj.day"
+                    class="btn p-0 rounded-circle fw-bold d-flex align-items-center justify-content-center border-0 z-2 transition-all"
+                    style="width: 32px; height: 32px; font-size: 14px;"
+                    :class="isSelected(dayObj.fullDate) ? 'text-white shadow-sm' : 'text-dark'"
+                    :style="isSelected(dayObj.fullDate) ? 'background-color: #fd7e14 !important;' : (isToday(dayObj.fullDate) ? 'border: 1px solid #fd7e14 !important; color: #fd7e14 !important;' : '')"
+                    @click="selectDate(dayObj.fullDate)"
+                  >
+                    {{ dayObj.day }}
+                  </button>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div v-if="tempStart || tempSingle" class="p-3 bg-white text-center border-top shadow-sm mt-auto z-3">
+          <div class="text-dark fw-bold mb-2 small">{{ previewText }}</div>
+          <button 
+            class="btn text-white w-100 fw-bold py-2 rounded-3" 
+            style="background-color: #8b4513; border-color: #8b4513;"
+            @click="confirmSelection"
+            :disabled="isRange && (!tempStart || !tempEnd)"
+          >
+            確認
+          </button>
+        </div>
+
       </div>
     </div>
   </div>
