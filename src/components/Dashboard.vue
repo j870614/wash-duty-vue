@@ -42,10 +42,19 @@
           </div>
           <div class="card-body d-flex flex-column gap-3 p-4">
             <div v-for="member in currentGroup?.members" :key="member" class="d-flex justify-content-between align-items-center p-3 bg-white rounded-3 border">
-              <span class="fw-bold d-flex align-items-center gap-2 text-dark">
-                <span class="badge bg-secondary bg-opacity-25 text-dark rounded-circle p-2">👤</span> {{ member }}
-              </span>
-              <button class="btn btn-sm btn-outline-secondary fw-bold bg-white" @click="state.modalTargetDebtor = member">
+              <div>
+                <span class="fw-bold d-flex align-items-center gap-2 text-dark">
+                  <span class="badge bg-secondary bg-opacity-25 text-dark rounded-circle p-2">👤</span> {{ member }}
+                </span>
+                <div v-if="getActiveSubstitute(member)" class="small mt-1 text-muted ms-3 ps-4">
+                  <span class="fw-bold text-success">{{ getActiveSubstitute(member).creditor }}</span> 代 {{ member }}
+                  <span class="badge bg-light text-dark border ms-1">{{ getActiveSubstitute(member).period }}</span>
+                </div>
+              </div>
+              <button v-if="getActiveSubstitute(member)" class="btn btn-sm btn-outline-primary fw-bold bg-white" @click="state.modalTargetDebtor = member">
+                ✏️ 編輯代班
+              </button>
+              <button v-else class="btn btn-sm btn-outline-secondary fw-bold bg-white" @click="state.modalTargetDebtor = member">
                 ➕ 安排代班
               </button>
             </div>
@@ -104,7 +113,7 @@
                <div v-if="editingHistoryId === item.id" class="bg-white p-3 border border-warning rounded-3 shadow-sm">
                  <div class="mb-2">
                    <label class="form-label small text-muted mb-1">值班日期</label>
-                   <input type="date" v-model="editData.date" class="form-control form-control-sm focus-ring focus-ring-warning">
+                   <CustomDatePicker v-model="editData.date" />
                  </div>
                  <div class="mb-2">
                    <label class="form-label small text-muted mb-1">值班人員</label>
@@ -155,14 +164,42 @@
       <h2 class="h5 fw-bold text-dark mb-4"><span class="fs-4 me-2">📝</span> 待圓滿互助紀錄清單</h2>
       <div class="row g-3">
         <div v-if="pendingDebts.length === 0" class="col-12 text-center text-muted fst-italic py-4">目前無待圓滿的互助紀錄。</div>
-        <div v-for="d in pendingDebts" :key="d.id" class="col-12 col-sm-6 col-md-4">
-          <div class="p-3 bg-light border rounded-3 d-flex justify-content-between align-items-center shadow-sm">
-            <div class="d-flex align-items-center gap-2">
-              <span class="fw-bold" style="color: #fd7e14;">{{ d.debtor }}</span>
-              <span class="text-muted" style="font-size: 10px;">←支援─</span>
-              <span class="fw-bold text-success">{{ d.creditor }}</span>
+        <div v-for="d in pendingDebts" :key="d.id" class="col-12 col-xl-6">
+          <div class="p-3 bg-light border rounded-3 shadow-sm d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 h-100">
+            
+            <!-- 左側：人員名單小卡 -->
+            <div class="d-flex align-items-center justify-content-center gap-2 bg-white px-3 py-2 rounded-3 border shadow-sm flex-fill flex-sm-grow-0" style="min-width: 240px;">
+              <div class="text-center" style="width: 70px;">
+                <div class="fw-bold fs-6" style="color: #fd7e14;">{{ d.debtor }}</div>
+                <div class="text-muted" style="font-size: 11px;">{{ getMemberGroup(d.debtor) }}</div>
+              </div>
+              
+              <div class="text-muted d-flex flex-column align-items-center px-1 flex-grow-1">
+                <span class="text-secondary fw-bold" style="font-size: 11px; letter-spacing: 1px;">支援</span>
+                <span class="fs-4 lh-1 text-secondary">⟵</span>
+              </div>
+              
+              <div class="text-center" style="width: 70px;">
+                <div class="fw-bold text-success fs-6">{{ d.creditor }}</div>
+                <div class="text-muted" style="font-size: 11px;">{{ getMemberGroup(d.creditor) }}</div>
+              </div>
             </div>
-            <span class="text-muted" style="font-size: 10px;">{{ d.dateCreated }}</span>
+            
+            <!-- 右側：時段/日期/按鈕 -->
+            <div class="d-flex flex-column align-items-center align-items-sm-end gap-2 w-100 w-sm-auto">
+              <!-- 標籤排成一行或視空間換行 -->
+              <div class="d-flex flex-row flex-wrap justify-content-center justify-content-sm-end align-items-center gap-2">
+                <span class="badge bg-warning bg-opacity-25 text-dark border border-warning px-2 py-1 fs-6 d-flex align-items-center" style="font-size: 13px !important; white-space: nowrap;">{{ d.period }}</span>
+                <span class="badge bg-white text-secondary border px-2 py-1 fs-6 d-flex align-items-center" style="font-size: 13px !important; white-space: nowrap;">📅 {{ d.dateCreated }}</span>
+              </div>
+              
+              <!-- 按鈕 -->
+              <div v-if="isAdmin" class="d-flex flex-row align-items-center justify-content-center justify-content-sm-end gap-2 w-100 mt-1 mt-sm-0 border-top border-sm-0 pt-2 pt-sm-0">
+                <button @click="editPendingDebt(d)" class="btn btn-sm btn-outline-primary py-1 px-3 bg-white fw-bold flex-fill flex-sm-grow-0">✏️ 編輯</button>
+                <button @click="deletePendingDebt(d.id)" class="btn btn-sm btn-outline-danger py-1 px-3 bg-white fw-bold flex-fill flex-sm-grow-0">🗑️ 刪除</button>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
@@ -174,9 +211,42 @@
 import { computed, watch, onMounted, nextTick, ref, reactive } from 'vue';
 import Chart from 'chart.js/auto';
 import { state, syncToCloud, isAdmin } from '../store.js';
+import CustomDatePicker from './CustomDatePicker.vue';
 
 const editingHistoryId = ref(null);
 const editData = reactive({ date: '', members: '', substitutes: '', shiftPeriods: [] });
+
+const getActiveSubstitute = (member) => {
+  return state.debts.find(d => !d.isSettled && d.debtor === member && currentGroup.value?.members.includes(d.debtor));
+};
+
+const getMemberGroup = (member) => {
+  const g = state.groups.find(g => g.members.includes(member));
+  return g ? `第 ${g.id} 組` : '無組別';
+};
+
+const deletePendingDebt = async (id) => {
+  if (confirm("確定要刪除這筆互助紀錄嗎？")) {
+    const idx = state.debts.findIndex(d => d.id === id);
+    if (idx !== -1) {
+      state.debts.splice(idx, 1);
+      await syncToCloud();
+    }
+  }
+};
+
+const editPendingDebt = async (debt) => {
+  const newDate = prompt("修改日期 (YYYY/M/D)", debt.dateCreated);
+  if (newDate) debt.dateCreated = newDate;
+  
+  const newCreditor = prompt("修改代班人員", debt.creditor);
+  if (newCreditor) debt.creditor = newCreditor;
+  
+  const newPeriod = prompt("修改時段", debt.period);
+  if (newPeriod) debt.period = newPeriod;
+  
+  if (newDate || newCreditor || newPeriod) await syncToCloud();
+};
 
 const startEditHistory = (item) => {
   editingHistoryId.value = item.id;
