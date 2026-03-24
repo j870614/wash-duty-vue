@@ -55,25 +55,25 @@
               </td>
             </tr>
             <tr v-for="item in filteredHistory" :key="item.id">
-              <td class="small fw-bold text-secondary">{{ item.date }}</td>
-              <td><span class="badge bg-secondary bg-opacity-10 text-dark border">第 {{ item.groupId }} 組</span></td>
-              <td class="small">{{ item.members }}</td>
+              <td class="fw-bold text-secondary" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">{{ item.date }}</td>
+              <td><span class="badge bg-secondary bg-opacity-10 text-dark border" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">第 {{ item.groupId }} 組</span></td>
+              <td :style="{ fontSize: 'var(--fs-name, 1rem)' }">{{ item.members }}</td>
               <td>
                 <div v-if="item.substitutesList && item.substitutesList.length">
-                  <div v-for="(sub, idx) in item.substitutesList" :key="idx" class="small mb-1">
-                    <span class="fw-bold text-warning-emphasis">{{ sub.creditor }}</span>
+                  <div v-for="(sub, idx) in item.substitutesList" :key="idx" class="mb-1" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">
+                    <span class="fw-bold text-warning-emphasis" :style="{ fontSize: 'var(--fs-name, 1rem)' }">{{ sub.creditor }}</span>
                     <span class="text-muted mx-1">代</span>
-                    <span class="fw-bold text-dark">{{ sub.debtor }}</span>
-                    <span class="badge bg-light text-muted ms-1 border">{{ sub.period }}</span>
+                    <span class="fw-bold text-dark" :style="{ fontSize: 'var(--fs-name, 1rem)' }">{{ sub.debtor }}</span>
+                    <span class="badge bg-light text-muted ms-1 border" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">{{ sub.period }}</span>
                   </div>
                 </div>
-                <div v-else-if="item.substitutes" class="small text-muted">
+                <div v-else-if="item.substitutes" class="text-muted" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">
                   {{ item.substitutes }}
                 </div>
-                <div v-else class="small text-white-50">—</div>
+                <div v-else class="text-white-50" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">—</div>
               </td>
               <td v-if="isAdmin" class="text-center">
-                <button @click="deleteRecord(item.id)" class="btn btn-sm btn-outline-danger border-0 p-1" title="刪除紀錄">
+                <button @click="deleteRecord(item.id)" class="btn btn-sm btn-outline-danger border-0 p-1" title="刪除紀錄" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">
                   🗑️
                 </button>
               </td>

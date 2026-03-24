@@ -43,18 +43,18 @@
           <div class="card-body d-flex flex-column gap-3 p-4">
             <div v-for="member in currentGroup?.members" :key="member" class="d-flex justify-content-between align-items-center p-3 bg-white rounded-3 border">
               <div>
-                <span class="fw-bold d-flex align-items-center gap-2 text-dark">
+                <span class="fw-bold d-flex align-items-center gap-2 text-dark" :style="{ fontSize: 'var(--fs-name, 1rem)' }">
                   <span class="badge bg-secondary bg-opacity-25 text-dark rounded-circle p-2">👤</span> {{ member }}
                 </span>
-                <div v-if="getActiveSubstitute(member)" class="small mt-1 text-muted ms-3 ps-4">
+                <div v-if="getActiveSubstitute(member)" class="mt-1 text-muted ms-3 ps-4" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">
                   <span class="fw-bold text-success">{{ getActiveSubstitute(member).creditor }}</span> 代 {{ member }}
                   <span class="badge bg-light text-dark border ms-1">{{ getActiveSubstitute(member).period }}</span>
                 </div>
               </div>
-              <button v-if="getActiveSubstitute(member)" class="btn btn-sm btn-outline-primary fw-bold bg-white" @click="state.modalTargetDebtor = member">
+              <button v-if="getActiveSubstitute(member)" class="btn btn-sm btn-outline-primary fw-bold bg-white" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }" @click="state.modalTargetDebtor = member">
                 ✏️ 編輯代班
               </button>
-              <button v-else class="btn btn-sm btn-outline-secondary fw-bold bg-white" @click="state.modalTargetDebtor = member">
+              <button v-else class="btn btn-sm btn-outline-secondary fw-bold bg-white" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }" @click="state.modalTargetDebtor = member">
                 ➕ 安排代班
               </button>
             </div>
@@ -75,13 +75,13 @@
             <div v-else class="d-flex flex-column gap-3">
               <div v-for="debt in compensationList" :key="debt.id" class="p-3 bg-warning bg-opacity-10 border border-warning border-opacity-25 rounded-3 d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2">
                 <div>
-                  <div class="text-dark fw-bold fs-5" style="color: #995c00 !important;">{{ debt.debtor }}</div>
-                  <div class="small mt-1 text-muted">{{ debt.dateCreated }} 由 {{ debt.creditor }} 支援</div>
+                  <div class="fw-bold" style="color: #995c00;" :style="{ fontSize: 'var(--fs-name, 1rem)' }">{{ debt.debtor }}</div>
+                  <div class="mt-1 text-muted" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">{{ debt.dateCreated }} 由 {{ debt.creditor }} 支援</div>
                 </div>
-                <button v-if="isAdmin" class="btn btn-warning text-white fw-bold shadow-sm" :disabled="state.isSyncing" @click="settleDebt(debt.id)" style="background-color: #fd7e14; border-color: #fd7e14;">
+                <button v-if="isAdmin" class="btn btn-warning text-white fw-bold shadow-sm" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }" :disabled="state.isSyncing" @click="settleDebt(debt.id)" style="background-color: #fd7e14; border-color: #fd7e14;">
                   ✅ 已完成回饋
                 </button>
-                <div v-else class="badge bg-warning text-dark bg-opacity-25 border border-warning border-opacity-50 p-2 opacity-75">
+                <div v-else class="badge bg-warning text-dark bg-opacity-25 border border-warning border-opacity-50 p-2 opacity-75" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">
                   ⏱ 待回饋
                 </div>
               </div>
@@ -138,13 +138,13 @@
                    <div class="p-2 border rounded-3 bg-light shadow-sm">
                      <div v-if="editData.substitutesList && editData.substitutesList.length > 0" class="d-flex flex-column gap-2">
                        <div v-for="(sub, i) in editData.substitutesList" :key="i" class="small bg-white p-2 border rounded-3 d-flex flex-column justify-content-center align-items-center shadow-sm text-center">
-                         <div class="fw-bold d-flex align-items-center gap-2">
+                         <div class="fw-bold d-flex align-items-center gap-2" :style="{ fontSize: 'var(--fs-name, 1rem)' }">
                            <span class="text-success fs-6">{{ sub.creditor }}</span> 
-                           <span class="text-muted" style="font-size: 11px;">支援</span> 
+                           <span class="text-muted" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">支援</span> 
                            <span class="text-dark fs-6">{{ sub.debtor }}</span>
                          </div>
                          <div class="mt-1">
-                           <span class="badge bg-warning bg-opacity-25 text-dark border border-warning">{{ sub.period }}</span>
+                           <span class="badge bg-warning bg-opacity-25 text-dark border border-warning" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">{{ sub.period }}</span>
                          </div>
                        </div>
                      </div>
@@ -161,14 +161,14 @@
                <!-- 檢視模式 -->
                <div v-else class="bg-white p-3 border rounded-3 shadow-sm hover-border h-100">
                  <div class="d-flex justify-content-between align-items-center mb-2">
-                   <strong class="text-dark fs-6" style="color: #8b4513 !important;">第 {{ item.groupId }} 組</strong>
+                   <strong class="text-dark fs-6" style="color: #8b4513 !important;" :style="{ fontSize: 'var(--fs-name, 1rem)' }">第 {{ item.groupId }} 組</strong>
                    <div class="d-flex align-items-center gap-2">
-                     <span class="text-muted" style="font-size: 11px; font-family: monospace;">{{ item.date }}</span>
-                     <button v-if="isAdmin" @click="startEditHistory(item)" class="btn btn-sm btn-link text-decoration-none p-0 text-secondary" title="編輯這筆紀錄">✏️</button>
+                     <span class="text-muted" style="font-family: monospace;" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">{{ item.date }}</span>
+                     <button v-if="isAdmin" @click="startEditHistory(item)" class="btn btn-sm btn-link text-decoration-none p-0 text-secondary" title="編輯這筆紀錄" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">✏️</button>
                    </div>
                  </div>
-                 <div class="text-secondary small">輪值名單：{{ item.members }}</div>
-                 <div v-if="item.substitutes" class="small mt-2 px-2 py-1 bg-warning bg-opacity-10 text-dark rounded border border-warning" style="border-style: dashed !important;">
+                 <div class="text-secondary" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">輪值名單：{{ item.members }}</div>
+                 <div v-if="item.substitutes" class="mt-2 px-2 py-1 bg-warning bg-opacity-10 text-dark rounded border border-warning" style="border-style: dashed !important;" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">
                    <span class="fw-bold">🔀 實際代班：</span>{{ item.substitutes }}
                    <span v-if="item.shiftPeriods?.length" class="ms-1 text-muted">({{ item.shiftPeriods.join('、') }})</span>
                  </div>
@@ -191,8 +191,8 @@
             <div class="d-flex align-items-center justify-content-center gap-2 w-100">
               <!-- 被代班人 -->
               <div>
-                <div class="fw-bold" style="color: #fd7e14; font-size: 0.9rem;">{{ d.debtor }}</div>
-                <div class="text-muted" style="font-size: 10px;">{{ getMemberGroup(d.debtor) }}</div>
+                <div class="fw-bold" style="color: #fd7e14; font-size: var(--fs-name, 1rem);">{{ d.debtor }}</div>
+                <div class="text-muted" style="font-size: var(--fs-main, 0.9rem);">{{ getMemberGroup(d.debtor) }}</div>
               </div>
 
               <!-- 箭頭 + 支援 -->
@@ -206,21 +206,21 @@
 
               <!-- 代班人 -->
               <div>
-                <div class="fw-bold text-success" style="font-size: 0.9rem;">{{ d.creditor }}</div>
-                <div class="text-muted" style="font-size: 10px;">{{ getMemberGroup(d.creditor) }}</div>
+                <div class="fw-bold text-success" style="font-size: var(--fs-name, 1rem);">{{ d.creditor }}</div>
+                <div class="text-muted" style="font-size: var(--fs-main, 0.9rem);">{{ getMemberGroup(d.creditor) }}</div>
               </div>
             </div>
 
             <!-- 第二行：時段 + 日期（置中） -->
             <div class="d-flex flex-wrap justify-content-center align-items-center gap-1">
-              <span class="badge bg-warning bg-opacity-25 text-dark border border-warning px-2 py-1" style="font-size: 11px; white-space: nowrap;">{{ d.period }}</span>
-              <span class="badge bg-white text-secondary border px-2 py-1" style="font-size: 11px; white-space: nowrap;">{{ d.dateCreated }}</span>
+              <span class="badge bg-warning bg-opacity-25 text-dark border border-warning px-2 py-1" :style="{ fontSize: 'var(--fs-main, 0.9rem)', whiteSpace: 'nowrap' }">{{ d.period }}</span>
+              <span class="badge bg-white text-secondary border px-2 py-1" :style="{ fontSize: 'var(--fs-main, 0.9rem)', whiteSpace: 'nowrap' }">{{ d.dateCreated }}</span>
             </div>
 
             <!-- 第三行：admin 按鈕（置中） -->
             <div v-if="isAdmin" class="d-flex justify-content-center gap-2 border-top pt-2 w-100 mt-auto">
-              <button @click="editPendingDebt(d)" class="btn btn-sm btn-outline-primary py-1 px-2 bg-white fw-bold" style="font-size: 12px;">✏️ 編輯</button>
-              <button @click="deletePendingDebt(d.id)" class="btn btn-sm btn-outline-danger py-1 px-2 bg-white fw-bold" style="font-size: 12px;">🗑️ 刪除</button>
+              <button @click="editPendingDebt(d)" class="btn btn-sm btn-outline-primary py-1 px-2 bg-white fw-bold" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">✏️ 編輯</button>
+              <button @click="deletePendingDebt(d.id)" class="btn btn-sm btn-outline-danger py-1 px-2 bg-white fw-bold" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">🗑️ 刪除</button>
             </div>
 
           </div>

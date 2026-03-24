@@ -1,5 +1,5 @@
 <template>
-  <div class="container py-4 min-vh-100 bg-light font-noto d-flex flex-column">
+  <div class="container py-4 min-vh-100 bg-light font-noto d-flex flex-column" :data-fs="fontScale">
 
     <!-- Loading Screen -->
     <div v-if="!state.isDataLoaded" class="m-auto text-center d-flex flex-column align-items-center justify-content-center flex-grow-1" style="min-height: 60vh;">
@@ -39,6 +39,12 @@
 
           <button v-if="state.user && !state.user.isAnonymous" @click="logout" class="btn btn-sm btn-outline-danger fw-bold shadow-sm px-3" style="white-space:nowrap">登出</button>
           <button v-else @click="loginWithGoogle" class="btn btn-sm btn-primary fw-bold shadow-sm px-3" style="white-space:nowrap">管理員登入</button>
+
+          <!-- 字體縮放 -->
+          <div class="d-flex align-items-center gap-1 ms-1">
+            <button @click="changeFontScale(-1)" class="font-scale-btn" :disabled="fontScale <= 0" title="縮小字體">字-</button>
+            <button @click="changeFontScale(1)" class="font-scale-btn" :disabled="fontScale >= 2" title="放大字體">字+</button>
+          </div>
         </div>
         <nav class="d-flex gap-3 gap-md-4 fw-bold overflow-auto text-nowrap w-100 justify-content-center justify-content-md-end pb-2" style="-webkit-overflow-scrolling: touch;">
           <button 
@@ -76,7 +82,7 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue';
+import { onMounted, ref } from 'vue';
 import { state, initFirebase, loginWithGoogle, logout, isAdmin, isSuperAdmin } from './store.js';
 import Dashboard from './components/Dashboard.vue';
 import AdminManager from './components/AdminManager.vue';
@@ -86,6 +92,17 @@ import ShiftModal from './components/ShiftModal.vue';
 import GlobalModal from './components/GlobalModal.vue';
 import GlobalToast from './components/GlobalToast.vue';
 import 'bootstrap/dist/css/bootstrap.min.css';
+
+// 字體縮放：0=標準, 1=大, 2=最大
+const FONT_STEPS = [1, 1.12, 1.25];
+const fontScale = ref(parseInt(localStorage.getItem('fontScale') ?? '2'));
+
+const changeFontScale = (dir) => {
+  const next = fontScale.value + dir;
+  if (next < 0 || next > 2) return;
+  fontScale.value = next;
+  localStorage.setItem('fontScale', next);
+};
 
 onMounted(() => {
   initFirebase();
@@ -99,6 +116,27 @@ onMounted(() => {
 .custom-scrollbar::-webkit-scrollbar { width: 6px; }
 .custom-scrollbar::-webkit-scrollbar-track { background: #f8f9fa; }
 .custom-scrollbar::-webkit-scrollbar-thumb { background: #adb5bd; border-radius: 10px; }
+
+/* 字體縮放（三段：data-fs=0/1/2） */
+[data-fs="0"] { --fs-main: 0.9rem; --fs-name: 1rem; }
+[data-fs="1"] { --fs-main: 1.05rem; --fs-name: 1.2rem; }
+[data-fs="2"] { --fs-main: 1.2rem; --fs-name: 1.4rem; }
+
+/* 縮放按鈕 */
+.font-scale-btn {
+  background: #f1f3f5;
+  border: 1.5px solid #dee2e6;
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #495057;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.font-scale-btn:hover:not(:disabled) { background: #e9ecef; }
+.font-scale-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
 /* 訪客標籤 */
 .user-badge {
