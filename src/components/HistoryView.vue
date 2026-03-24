@@ -14,21 +14,13 @@
       <div class="row g-3 mb-4 align-items-end">
         <div class="col-12 col-md-6">
           <label class="form-label small fw-bold text-muted mb-2">📅 查詢日期區間 (從 ~ 到)</label>
-          <div class="d-flex align-items-center gap-2 bg-white p-2 rounded-3 border shadow-sm">
-            <input 
-              type="date" 
-              v-model="startDate" 
-              class="form-control border-0 shadow-none bg-transparent"
-              style="cursor: pointer;"
-            />
-            <span class="text-muted">➔</span>
-            <input 
-              type="date" 
-              v-model="endDate" 
-              class="form-control border-0 shadow-none bg-transparent"
-              style="cursor: pointer;"
-            />
-          </div>
+          <CustomDatePicker v-model="dateRange" :is-range="true">
+            <div class="d-flex align-items-center gap-2 bg-white p-2 rounded-3 border shadow-sm">
+              <span class="text-dark">{{ startDate || '開始日期' }}</span>
+              <span class="text-muted">➔</span>
+              <span class="text-dark">{{ endDate || '結束日期' }}</span>
+            </div>
+          </CustomDatePicker>
         </div>
         <div class="col-6 col-md-2">
           <button @click="setQuickRange('month')" class="btn btn-outline-warning w-100 btn-sm fw-bold border-2">最近一個月</button>
@@ -100,10 +92,21 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { state, isAdmin, syncToCloud, showConfirm } from '../store.js';
+import CustomDatePicker from './CustomDatePicker.vue';
 
 const startDate = ref('');
 const endDate = ref('');
 const searchQuery = ref('');
+
+const dateRange = computed({
+  get: () => [startDate.value, endDate.value],
+  set: (val) => {
+    if (val && val.length === 2) {
+      startDate.value = val[0];
+      endDate.value = val[1];
+    }
+  }
+});
 
 const setQuickRange = (type) => {
   const now = new Date();

@@ -33,14 +33,14 @@
         <p v-if="state.admins.length === 0" class="text-muted small fst-italic text-center py-4">目前沒有額外授權的其他管理員（.env 中設定的主總管不會顯示在此）</p>
         
         <div v-else class="d-flex flex-column gap-2">
-          <div v-for="(admin, idx) in state.admins" :key="idx" class="d-flex justify-content-between align-items-center p-3 border rounded">
-            <div>
-              <div class="fw-bold">{{ admin.email }}</div>
+          <div v-for="(admin, idx) in state.admins" :key="idx" class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 p-3 border rounded">
+            <div class="text-break w-100 pe-2">
+              <div class="fw-bold fs-6">{{ admin.email }}</div>
               <div class="small mt-1" :class="admin.role === 'super' ? 'text-primary fw-bold' : 'text-success fw-bold'">
                 {{ admin.role === 'super' ? '👑 系統總管' : '⭐ 一般管理員' }}
               </div>
             </div>
-            <button @click="removeAdmin(idx)" class="btn btn-sm btn-outline-danger fw-bold px-3">收回權限</button>
+            <button @click="removeAdmin(idx)" class="btn btn-sm btn-outline-danger fw-bold px-3 text-nowrap align-self-end align-self-sm-center">收回權限</button>
           </div>
         </div>
       </div>

@@ -21,15 +21,16 @@
       </div>
       <div class="d-flex flex-column align-items-center align-items-md-end">
         <div class="mb-3 d-flex align-items-center gap-2">
-          <span v-if="state.user && !state.user.isAnonymous" class="badge bg-success">
-            👤 {{ state.user.displayName || state.user.email }}
+          <img v-if="state.user && state.user.photoURL" :src="state.user.photoURL" class="rounded-circle shadow-sm border border-2 border-white" width="36" height="36" alt="Avatar">
+          <span v-if="state.user && !state.user.isAnonymous" class="badge bg-success fw-bold px-3 py-2 fs-6 shadow-sm">
+            {{ state.user.displayName || state.user.email.split('@')[0] }}
           </span>
-          <span v-else class="badge bg-secondary">👤 訪客 (匿名)</span>
+          <span v-else class="badge bg-secondary px-3 py-2 fs-6 shadow-sm">👤 訪客 (匿名)</span>
           
-          <button v-if="state.user && !state.user.isAnonymous" @click="logout" class="btn btn-sm btn-outline-danger">登出</button>
-          <button v-else @click="loginWithGoogle" class="btn btn-sm btn-outline-primary">管理員登入</button>
+          <button v-if="state.user && !state.user.isAnonymous" @click="logout" class="btn btn-sm btn-danger fw-bold shadow-sm px-3">登出</button>
+          <button v-else @click="loginWithGoogle" class="btn btn-sm btn-primary fw-bold shadow-sm px-3">管理員登入</button>
         </div>
-        <nav class="d-flex gap-3 gap-md-4 fw-bold overflow-auto text-nowrap w-100 justify-content-start justify-content-md-end pb-1" style="-webkit-overflow-scrolling: touch;">
+        <nav class="d-flex gap-3 gap-md-4 fw-bold overflow-auto text-nowrap w-100 justify-content-start justify-content-md-end pb-2 pe-3 me-n3" style="-webkit-overflow-scrolling: touch;">
           <button 
             class="btn btn-link text-decoration-none px-0 pb-1"
             :class="state.activeTab === 'dashboard' ? 'active-tab' : 'text-secondary'"

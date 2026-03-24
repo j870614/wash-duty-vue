@@ -175,8 +175,11 @@
               </div>
               
               <div class="text-muted d-flex flex-column align-items-center px-1 flex-grow-1">
-                <span class="text-secondary fw-bold" style="font-size: 11px; letter-spacing: 1px;">支援</span>
-                <span class="fs-4 lh-1 text-secondary">⟵</span>
+                <span class="badge rounded-pill bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 mb-1" style="font-size: 12px; letter-spacing: 2px; padding: 3px 10px;">支援</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-secondary opacity-75">
+                  <line x1="21" y1="12" x2="3" y2="12"></line>
+                  <polyline points="9 18 3 12 9 6"></polyline>
+                </svg>
               </div>
               
               <div class="text-center" style="width: 70px;">
