@@ -55,7 +55,7 @@
           </div>
           
         </div>
-        <nav class="d-flex gap-3 gap-md-4 fw-bold overflow-auto text-nowrap w-100 justify-content-center justify-content-md-end pb-2" style="-webkit-overflow-scrolling: touch;">
+        <nav class="nav-bar d-flex gap-3 gap-md-4 fw-bold text-nowrap w-100 justify-content-center justify-content-md-end pb-2">
           <button 
             class="btn btn-link text-decoration-none px-0 pb-1"
             :class="state.activeTab === 'dashboard' ? 'active-tab' : 'text-secondary'"
@@ -84,6 +84,7 @@
     <RosterEditor v-else-if="state.activeTab === 'roster'" />
     <HistoryView v-else-if="state.activeTab === 'history'" />
     <ShiftModal />
+    <PendingDebtEditModal />
     <GlobalModal />
     <GlobalToast />
     </template>
@@ -98,13 +99,14 @@ import AdminManager from './components/AdminManager.vue';
 import RosterEditor from './components/RosterEditor.vue';
 import HistoryView from './components/HistoryView.vue';
 import ShiftModal from './components/ShiftModal.vue';
+import PendingDebtEditModal from './components/PendingDebtEditModal.vue';
 import GlobalModal from './components/GlobalModal.vue';
 import GlobalToast from './components/GlobalToast.vue';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 // 字體縮放：0=標準, 1=大, 2=最大
 const FONT_STEPS = [1, 1.12, 1.25];
-const fontScale = ref(parseInt(localStorage.getItem('fontScale') ?? '2'));
+const fontScale = ref(parseInt(localStorage.getItem('fontScale') ?? '1'));
 
 const changeFontScale = (dir) => {
   const next = fontScale.value + dir;
@@ -123,14 +125,15 @@ onMounted(() => {
 :root {
   --bs-primary: #fd7e14;
   --bs-primary-rgb: 253, 126, 20;
-  --fs-main: 1.1rem; /* 預設為最大的基礎字體 */
-  --fs-name: 1.25rem; /* 預設為最大的名字字體 */
+  /* 1.2x Minor Third 等比縮放 — Medium 為預設基準 (對齊舊版最大號 1.1rem) */
+  --fs-main: 1.1rem;
+  --fs-name: 1.25rem;
 }
 
-/* 漸進式字體縮放定義 */
-[data-fs="0"] { --fs-main: 0.9rem; --fs-name: 1rem; }
-[data-fs="1"] { --fs-main: 1rem; --fs-name: 1.15rem; }
-[data-fs="2"] { --fs-main: 1.1rem; --fs-name: 1.25rem; }
+/* 漸進式字體縮放：Small / Medium(預設) / Large */
+[data-fs="0"] { --fs-main: 0.935rem; --fs-name: 1.06rem; }  /* Small: Medium * 0.85 */
+[data-fs="1"] { --fs-main: 1.1rem; --fs-name: 1.25rem; }    /* Medium: 舊版最大號 */
+[data-fs="2"] { --fs-main: 1.32rem; --fs-name: 1.5rem; }    /* Large: Medium * 1.2 */
 
 body {
   background-color: #f0f2f5;
@@ -212,18 +215,39 @@ body {
   gap: 4px;
 }
 
-/* 導航按鈕動畫 */
+/* ===== 導航列 ===== */
+.nav-bar {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 16px;
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.nav-bar::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+/* 導航按鈕 */
 nav button {
   position: relative;
   border: none;
   background: none;
-  padding-bottom: 4px;
-  color: #6c757d;
-  transition: color 0.3s;
+  padding-bottom: 6px;
+  color: #555;
+  font-weight: 700;
+  transition: color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-nav button.active {
-  color: #fd7e14;
+nav button:hover {
+  color: #333;
+}
+
+/* Active Tab: 深色文字 + 橘色底線 */
+nav button.active-tab {
+  color: #1a1a1a;
 }
 
 nav button::after {
@@ -233,13 +257,13 @@ nav button::after {
   left: 50%;
   width: 0;
   height: 3px;
-  background-color: #fd7e14;
-  transition: all 0.3s;
+  background: linear-gradient(90deg, #fd7e14, #ff9e43);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   transform: translateX(-50%);
   border-radius: 2px;
 }
 
-nav button.active::after {
+nav button.active-tab::after {
   width: 100%;
 }
 

@@ -226,7 +226,7 @@
 
             <!-- 第三行：admin 按鈕（置中） -->
             <div v-if="isAdmin" class="d-flex justify-content-center gap-2 border-top pt-2 w-100 mt-auto">
-              <button @click="editPendingDebt(d)" class="btn btn-sm btn-outline-primary py-1 px-2 bg-white fw-bold" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">✏️ 編輯</button>
+              <button @click="state.editingPendingDebt = d" class="btn btn-sm btn-outline-primary py-1 px-2 bg-white fw-bold" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">✏️ 編輯</button>
               <button @click="deletePendingDebt(d.id)" class="btn btn-sm btn-outline-danger py-1 px-2 bg-white fw-bold" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">🗑️ 刪除</button>
             </div>
 
@@ -381,18 +381,7 @@ const deletePendingDebt = async (id) => {
   });
 };
 
-const editPendingDebt = async (debt) => {
-  const newDate = prompt("修改日期 (YYYY/M/D)", debt.dateCreated);
-  if (newDate) debt.dateCreated = newDate;
-  
-  const newCreditor = prompt("修改代班人員", debt.creditor);
-  if (newCreditor) debt.creditor = newCreditor;
-  
-  const newPeriod = prompt("修改時段", debt.period);
-  if (newPeriod) debt.period = newPeriod;
-  
-  if (newDate || newCreditor || newPeriod) await syncToCloud();
-};
+// editPendingDebt 已由 PendingDebtEditModal 組件接管
 
 const startEditHistory = (item) => {
   editingHistoryId.value = item.id;
