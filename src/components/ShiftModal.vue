@@ -11,17 +11,19 @@
         <div v-if="step === 1" class="modal-body custom-scrollbar">
           <div class="mb-3">
             <label class="form-label small fw-bold text-muted mb-1" :style="{ fontSize: 'var(--fs-main, 0.85rem)' }">選擇代班時段：</label>
-            <div class="d-flex flex-wrap gap-2">
-              <template v-for="p in ['早齋', '午齋', '藥石', '整天']" :key="p">
+            <div class="d-flex flex-wrap gap-2 p-2 rounded-3 shift-period-group" :class="{ 'is-invalid': errors.time }">
+              <template v-for="p in periods" :key="p">
                 <input type="checkbox" class="btn-check" :id="'m-p-' + p" :value="p" v-model="selectedPeriod" autocomplete="off">
                 <label class="btn btn-outline-warning btn-sm px-3 fw-bold" :for="'m-p-' + p" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">{{ p }}</label>
               </template>
             </div>
+            <div v-if="errors.time" class="invalid-feedback d-block">請至少選擇一個代班時段</div>
           </div>
 
           <label class="form-label small fw-bold text-muted mb-1" :style="{ fontSize: 'var(--fs-main, 0.85rem)' }">選擇代班人員：</label>
-          <input type="text" v-model="searchQuery" placeholder="搜尋姓名..." class="form-control mb-3 shadow-none border-secondary" :style="{ fontSize: 'var(--fs-main, 0.95rem)' }">
-          <div class="row g-2">
+          <input type="text" v-model="searchQuery" placeholder="搜尋姓名..." class="form-control shadow-none" :class="errors.staff ? 'border-danger' : 'border-secondary'" :style="{ fontSize: 'var(--fs-main, 0.95rem)' }">
+          <div v-if="errors.staff" class="invalid-feedback d-block">請搜尋並點選一位代班法師</div>
+          <div class="row g-2 mb-3 mt-2">
             <div v-for="m in availableMembers" :key="m" class="col-6">
               <button 
                 class="btn w-100 text-truncate text-start"
@@ -32,7 +34,10 @@
               </button>
             </div>
           </div>
+
         </div>
+
+
 
         <!-- Step 2: Confirmation -->
         <div v-else-if="step === 2" class="modal-body">
@@ -61,7 +66,7 @@
             <button v-if="step === 1" type="button" class="btn btn-light text-muted fw-bold" @click="closeModal" :disabled="state.isSyncing" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">取消</button>
             <button v-if="step === 2" type="button" class="btn btn-light text-muted fw-bold" @click="step = 1" :disabled="state.isSyncing" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">返回修改</button>
             
-            <button v-if="step === 1" type="button" class="btn btn-primary fw-bold" @click="goToConfirm" :disabled="!selectedCreditor || selectedPeriod.length === 0" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">下一步：確認資訊 →</button>
+            <button v-if="step === 1" type="button" class="btn btn-primary fw-bold" @click="goToConfirm" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">下一步：確認資訊 →</button>
             <button v-if="step === 2" type="button" class="btn btn-success fw-bold px-4 shadow-sm" @click="saveDebt" :disabled="state.isSyncing" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">✅ 確認儲存</button>
           </div>
         </div>
@@ -78,6 +83,8 @@ const searchQuery = ref('');
 const selectedPeriod = ref([]);
 const selectedCreditor = ref(null);
 const step = ref(1);
+const errors = ref({ time: false, staff: false });
+const periods = ['早齋', '午齋', '藥石', '整天'];
 
 const currentGroup = computed(() => state.groups.length ? state.groups[state.currentGroupIndex] : null);
 const currentGroupMembers = computed(() => currentGroup.value?.members || []);
@@ -90,6 +97,7 @@ const isEditing = computed(() => !!existingDebt.value);
 watch(() => state.modalTargetDebtor, (newVal) => {
   if (newVal) {
     step.value = 1;
+    errors.value = { time: false, staff: false };
     if (existingDebt.value) {
       selectedCreditor.value = existingDebt.value.creditor;
       selectedPeriod.value = existingDebt.value.period.split('、');
@@ -114,6 +122,14 @@ watch(() => [...selectedPeriod.value], (newVal, oldVal) => {
   }
 });
 
+// 即時清除驗證錯誤
+watch(selectedPeriod, (val) => {
+  if (val.length > 0) errors.value.time = false;
+});
+watch(selectedCreditor, (val) => {
+  if (val) errors.value.staff = false;
+});
+
 const availableMembers = computed(() => {
   const term = searchQuery.value.trim().toLowerCase();
   const all = state.groups.flatMap(g => g.members);
@@ -129,10 +145,9 @@ const availableMembers = computed(() => {
 });
 
 const goToConfirm = () => {
-  if (selectedPeriod.value.length === 0) {
-    alert("請至少選擇一個代班時段");
-    return;
-  }
+  errors.value.time = selectedPeriod.value.length === 0;
+  errors.value.staff = !selectedCreditor.value;
+  if (errors.value.time || errors.value.staff) return;
   step.value = 2;
 };
 
@@ -175,5 +190,35 @@ const closeModal = () => {
   selectedPeriod.value = [];
   selectedCreditor.value = null;
   step.value = 1;
+  errors.value = { time: false, staff: false };
 };
 </script>
+
+<style scoped>
+/* Inline Validation */
+.shift-period-group {
+  border: 1.5px solid transparent;
+  transition: border-color 0.2s ease;
+}
+.shift-period-group.is-invalid {
+  border-color: var(--bs-danger, #dc3545);
+  background: rgba(220, 53, 69, 0.03);
+}
+
+.invalid-feedback {
+  font-size: 0.8rem;
+  color: var(--bs-danger, #dc3545);
+  margin-top: 4px;
+  font-weight: 500;
+  animation: fadeSlideIn 0.25s ease;
+}
+
+.border-danger {
+  border-color: var(--bs-danger, #dc3545) !important;
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+</style>
