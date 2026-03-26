@@ -20,8 +20,6 @@ export const state = reactive({
   debts: [],
   history: [],
   admins: [],
-  modalTargetDebtor: null,
-  editingPendingDebt: null,
   user: null,
   isSyncing: false,
   isDataLoaded: false,

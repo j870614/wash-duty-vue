@@ -79,12 +79,24 @@
       </div>
     </header>
 
-    <Dashboard v-if="state.activeTab === 'dashboard'" />
+    <Dashboard v-if="state.activeTab === 'dashboard'" @open-shift-modal="openShiftModal" />
     <AdminManager v-else-if="isSuperAdmin && state.activeTab === 'admin'" />
     <RosterEditor v-else-if="state.activeTab === 'roster'" />
     <HistoryView v-else-if="state.activeTab === 'history'" />
-    <ShiftModal />
-    <PendingDebtEditModal />
+    
+    <!-- Unified Shift Modal -->
+    <ShiftModal 
+      :show="shiftModalState.show"
+      :is-edit-mode="shiftModalState.isEditMode"
+      :target-debtor="shiftModalState.targetDebtor"
+      :initial-period="shiftModalState.initialPeriod"
+      :initial-creditor="shiftModalState.initialCreditor"
+      :is-syncing="state.isSyncing"
+      @close="closeShiftModal"
+      @save="saveShiftModal"
+      @cancel="cancelShiftModal"
+    />
+    
     <GlobalModal />
     <GlobalToast />
     </template>
@@ -92,17 +104,78 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
-import { state, initFirebase, loginWithGoogle, logout, isAdmin, isSuperAdmin } from './store.js';
+import { onMounted, ref, reactive, watch } from 'vue';
+import { state, initFirebase, loginWithGoogle, logout, isAdmin, isSuperAdmin, syncToCloud, showConfirm } from './store.js';
 import Dashboard from './components/Dashboard.vue';
 import AdminManager from './components/AdminManager.vue';
 import RosterEditor from './components/RosterEditor.vue';
 import HistoryView from './components/HistoryView.vue';
 import ShiftModal from './components/ShiftModal.vue';
-import PendingDebtEditModal from './components/PendingDebtEditModal.vue';
 import GlobalModal from './components/GlobalModal.vue';
 import GlobalToast from './components/GlobalToast.vue';
 import 'bootstrap/dist/css/bootstrap.min.css';
+
+// Modal 狀態管理
+const shiftModalState = reactive({
+  show: false,
+  isEditMode: false,
+  targetDebtor: '',
+  initialPeriod: [],
+  initialCreditor: null,
+  editId: null // 用於追蹤編輯中的債務 ID
+});
+
+const openShiftModal = ({ debtor, isEdit, initialData = {} }) => {
+  shiftModalState.targetDebtor = debtor;
+  shiftModalState.isEditMode = isEdit;
+  shiftModalState.initialPeriod = initialData.period ? initialData.period.split('、') : [];
+  shiftModalState.initialCreditor = initialData.creditor || null;
+  shiftModalState.editId = initialData.id || null;
+  shiftModalState.show = true;
+};
+
+const closeShiftModal = () => {
+  shiftModalState.show = false;
+};
+
+const saveShiftModal = async (data) => {
+  if (state.isSyncing) return;
+  
+  if (shiftModalState.isEditMode && shiftModalState.editId) {
+    // 編輯模式
+    const target = state.debts.find(d => d.id === shiftModalState.editId);
+    if (target) {
+      target.creditor = data.creditor;
+      target.period = data.period;
+    }
+  } else {
+    // 新增模式
+    state.debts.push({
+      id: 'debt-' + Date.now(),
+      debtor: data.debtor,
+      creditor: data.creditor,
+      period: data.period,
+      dateCreated: new Date().toLocaleDateString(),
+      isSettled: false
+    });
+  }
+  
+  await syncToCloud();
+  closeShiftModal();
+};
+
+const cancelShiftModal = async (debtor) => {
+  if (!isAdmin.value || !shiftModalState.editId) return;
+  
+  showConfirm("取消代班安排", `確定要取消替 ${debtor} 安排的代班嗎？`, async () => {
+    const idx = state.debts.findIndex(d => d.id === shiftModalState.editId);
+    if (idx !== -1) {
+      state.debts.splice(idx, 1);
+      await syncToCloud();
+      closeShiftModal();
+    }
+  });
+};
 
 // 字體縮放：0=標準, 1=大, 2=最大
 const FONT_STEPS = [1, 1.12, 1.25];

@@ -55,10 +55,10 @@
               </div>
               <div class="w-100 d-sm-flex justify-content-sm-end" style="max-width: fit-content; min-width: 100px;" :class="{ 'ms-auto': false }"> 
                 <!-- 在手機版按鈕佔全寬，sm以上自適應 -->
-                <button v-if="getActiveSubstitute(member)" class="btn btn-sm btn-outline-primary fw-bold bg-white w-100" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }" @click="state.modalTargetDebtor = member">
+                <button v-if="getActiveSubstitute(member)" class="btn btn-sm btn-outline-primary fw-bold bg-white w-100" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }" @click="$emit('open-shift-modal', { debtor: member, isEdit: true, initialData: getActiveSubstitute(member) })">
                   ✏️ 編輯代班
                 </button>
-                <button v-else class="btn btn-sm btn-outline-secondary fw-bold bg-white w-100" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }" @click="state.modalTargetDebtor = member">
+                <button v-else class="btn btn-sm btn-outline-secondary fw-bold bg-white w-100" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }" @click="$emit('open-shift-modal', { debtor: member, isEdit: false })">
                   ➕ 安排代班
                 </button>
               </div>
@@ -226,7 +226,7 @@
 
             <!-- 第三行：admin 按鈕（置中） -->
             <div v-if="isAdmin" class="d-flex justify-content-center gap-2 border-top pt-2 w-100 mt-auto">
-              <button @click="state.editingPendingDebt = d" class="btn btn-sm btn-outline-primary py-1 px-2 bg-white fw-bold" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">✏️ 編輯</button>
+              <button @click="$emit('open-shift-modal', { debtor: d.debtor, isEdit: true, initialData: d })" class="btn btn-sm btn-outline-primary py-1 px-2 bg-white fw-bold" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">✏️ 編輯</button>
               <button @click="deletePendingDebt(d.id)" class="btn btn-sm btn-outline-danger py-1 px-2 bg-white fw-bold" :style="{ fontSize: 'var(--fs-main, 0.9rem)' }">🗑️ 刪除</button>
             </div>
 
@@ -296,6 +296,8 @@ import { computed, watch, onMounted, nextTick, ref, reactive } from 'vue';
 import Chart from 'chart.js/auto';
 import { state, syncToCloud, isAdmin, showConfirm } from '../store.js';
 import CustomDatePicker from './CustomDatePicker.vue';
+
+const emit = defineEmits(['open-shift-modal']);
 
 const editingHistoryId = ref(null);
 const isSubEditModalOpen = ref(false);
