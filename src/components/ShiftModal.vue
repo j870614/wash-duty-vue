@@ -189,23 +189,23 @@ const closeModal = () => {
 
 /* 時段按鈕樣式 */
 .period-btn {
-  border: 1.5px solid #fd7e14;
-  color: #fd7e14;
+  border: 1.5px solid #994d00;
+  color: #994d00;
   border-radius: 10px;
   background: white;
   transition: all 0.2s;
 }
 
 .period-btn:hover {
-  background: rgba(253, 126, 20, 0.05);
-  color: #fd7e14;
+  background: #fdf0e6;
+  color: #994d00;
 }
 
 .btn-check:checked + .period-btn {
-  background: #fd7e14;
-  border-color: #fd7e14;
+  background: #994d00;
+  border-color: #994d00;
   color: white;
-  box-shadow: 0 4px 8px rgba(253, 126, 20, 0.2);
+  box-shadow: 0 4px 8px rgba(153, 77, 0, 0.25);
 }
 
 /* 人員按鈕樣式 */
@@ -216,11 +216,11 @@ const closeModal = () => {
 }
 
 .btn-selected {
-  background: #fd7e14 !important;
-  border-color: #fd7e14 !important;
+  background: #994d00 !important;
+  border-color: #994d00 !important;
   color: white !important;
   font-weight: 800;
-  box-shadow: 0 4px 10px rgba(253, 126, 20, 0.2);
+  box-shadow: 0 4px 10px rgba(153, 77, 0, 0.25);
 }
 
 .member-grid {

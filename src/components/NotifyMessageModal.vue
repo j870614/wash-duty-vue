@@ -221,17 +221,21 @@ const copyToClipboard = async () => {
   box-shadow: 0 4px 8px rgba(13, 110, 253, 0.2);
 }
 .period-btn {
-  border: 1.5px solid #fd7e14;
-  color: #fd7e14;
+  border: 1.5px solid #994d00;
+  color: #994d00;
   border-radius: 10px;
   background: white;
   transition: all 0.2s;
 }
+.period-btn:hover {
+  background: #fdf0e6;
+  color: #994d00;
+}
 .btn-check:checked + .period-btn {
-  background: #fd7e14;
-  border-color: #fd7e14;
+  background: #994d00;
+  border-color: #994d00;
   color: white;
-  box-shadow: 0 4px 8px rgba(253, 126, 20, 0.2);
+  box-shadow: 0 4px 8px rgba(153, 77, 0, 0.25);
 }
 .period-container {
   border: 1.5px solid transparent;
