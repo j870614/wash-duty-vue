@@ -21,20 +21,20 @@
         </div>
       </div>
       
-      <div v-if="isAdmin" class="col-12 col-md-4 d-flex flex-column gap-2">
-        <button
-          @click="completeCurrentShift"
-          :disabled="state.isSyncing || state.groups.length === 0"
-          class="btn btn-success w-100 fw-bold shadow-sm d-flex flex-column align-items-center justify-content-center gap-2 rounded-4 py-3 flex-grow-1">
-          <span class="fs-2">{{ state.isSyncing ? '⏳' : '✨' }}</span>
-          <span class="fs-5">{{ state.isSyncing ? '處理中...' : '完成本次值班' }}</span>
-          <span class="small text-white-50">自動紀錄並切換下一組</span>
-        </button>
+      <div v-if="isAdmin" class="col-12 col-md-4 d-flex flex-column gap-4">
         <button
           @click="showNotifyModal = true"
           class="btn btn-outline-primary w-100 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2 rounded-4 py-2">
           <span>📣</span>
           <span>生成提醒訊息</span>
+        </button>
+        <button
+          @click="requestCompleteShift"
+          :disabled="state.isSyncing || state.groups.length === 0 || !!pendingShift"
+          class="btn btn-success w-100 fw-bold shadow-sm d-flex flex-column align-items-center justify-content-center gap-2 rounded-4 py-3 flex-grow-1">
+          <span class="fs-2">{{ state.isSyncing ? '⏳' : '✨' }}</span>
+          <span class="fs-5">{{ state.isSyncing ? '處理中...' : '完成本次值班' }}</span>
+          <span class="small text-white-50">自動紀錄並切換下一組</span>
         </button>
       </div>
     </div>
@@ -244,6 +244,19 @@
     <!-- Notify Message Modal -->
     <NotifyMessageModal :show="showNotifyModal" @close="showNotifyModal = false" />
 
+    <!-- Undo Toast -->
+    <Transition name="undo-toast">
+      <div
+        v-if="pendingShift"
+        style="position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); z-index: 1080; width: calc(100% - 2rem); max-width: 380px;"
+      >
+        <div class="d-flex align-items-center justify-content-between bg-dark text-white rounded-4 shadow-lg px-4 py-3 gap-3">
+          <span class="small">✨ 值班完成，即將切換下一組（{{ pendingShift.countdown }}s）</span>
+          <button @click="cancelCompleteShift" class="btn btn-sm btn-outline-light rounded-pill px-3 flex-shrink-0">取消</button>
+        </div>
+      </div>
+    </Transition>
+
     <!-- History Substitute Edit Modal -->
     <div v-if="isSubEditModalOpen" class="position-fixed top-0 start-0 w-100 h-100 z-3 d-flex align-items-center justify-content-center" style="background-color: rgba(0,0,0,0.5); backdrop-filter: blur(2px); z-index: 1100;">
       <div class="bg-white rounded-4 shadow-lg d-flex flex-column overflow-hidden position-relative w-100 m-3" style="max-width: 420px; max-height: 90vh;">
@@ -301,7 +314,7 @@
 </template>
 
 <script setup>
-import { computed, watch, onMounted, nextTick, ref, reactive } from 'vue';
+import { computed, watch, onMounted, onUnmounted, nextTick, ref, reactive } from 'vue';
 import Chart from 'chart.js/auto';
 import { state, syncToCloud, isAdmin, showConfirm } from '../store.js';
 import CustomDatePicker from './CustomDatePicker.vue';
@@ -313,6 +326,58 @@ const editingHistoryId = ref(null);
 const isSubEditModalOpen = ref(false);
 const showNotifyModal = ref(false);
 const editData = reactive({ date: '', groupId: 1, members: '', substitutesList: [] });
+
+const UNDO_SECONDS = 5;
+const pendingShift = ref(null);
+
+const requestCompleteShift = () => {
+  if (state.isSyncing || state.groups.length === 0 || pendingShift.value) return;
+
+  const currentSubs = state.debts
+    .filter(d => !d.isSettled && currentGroup.value.members.includes(d.debtor))
+    .map(d => ({ creditor: d.creditor, debtor: d.debtor, period: d.period || '午齋' }));
+
+  const record = {
+    id: Date.now(),
+    date: new Date().toISOString().split('T')[0],
+    groupId: currentGroup.value.id,
+    members: currentGroup.value.members.join(', '),
+    substitutesList: currentSubs,
+    substitutes: currentSubs.map(s => `${s.creditor}代${s.debtor}(${s.period})`).join(', '),
+    shiftPeriods: []
+  };
+
+  const nextGroupIndex = (state.currentGroupIndex + 1) % state.groups.length;
+  let countdown = UNDO_SECONDS;
+
+  const intervalId = setInterval(() => {
+    countdown--;
+    if (pendingShift.value) pendingShift.value.countdown = countdown;
+    if (countdown <= 0) commitCompleteShift();
+  }, 1000);
+
+  pendingShift.value = { record, nextGroupIndex, countdown, intervalId };
+};
+
+const cancelCompleteShift = () => {
+  if (!pendingShift.value) return;
+  clearInterval(pendingShift.value.intervalId);
+  pendingShift.value = null;
+};
+
+const commitCompleteShift = async () => {
+  if (!pendingShift.value) return;
+  const { record, nextGroupIndex, intervalId } = pendingShift.value;
+  clearInterval(intervalId);
+  pendingShift.value = null;
+  state.history.unshift(record);
+  state.currentGroupIndex = nextGroupIndex;
+  await syncToCloud();
+};
+
+onUnmounted(() => {
+  if (pendingShift.value) clearInterval(pendingShift.value.intervalId);
+});
 
 const getActiveSubstitute = (member) => {
   return state.debts.find(d => !d.isSettled && d.debtor === member && currentGroup.value?.members.includes(d.debtor));
@@ -463,32 +528,6 @@ const syncGroupChange = async (step) => {
   await syncToCloud();
 };
 
-const completeCurrentShift = async () => {
-  if (state.isSyncing || state.groups.length === 0) return;
-  
-  // 自動找出此組別的代班法師 (自己是 debtor, 別人是 creditor 且尚未圓滿)
-  const currentSubs = state.debts
-    .filter(d => !d.isSettled && currentGroup.value.members.includes(d.debtor))
-    .map(d => ({
-      creditor: d.creditor,
-      debtor: d.debtor,
-      period: d.period || '午齋'
-    }));
-    
-  const record = {
-    id: Date.now(),
-    date: new Date().toISOString().split('T')[0], // YYYY-MM-DD
-    groupId: currentGroup.value.id,
-    members: currentGroup.value.members.join(", "),
-    substitutesList: currentSubs,
-    substitutes: currentSubs.map(s => `${s.creditor}代${s.debtor}(${s.period})`).join(", "),
-    shiftPeriods: []
-  };
-  state.history.unshift(record);
-  // 不再此處限制 5 筆，讓 HistoryView 可以查看全部
-  state.currentGroupIndex = (state.currentGroupIndex + 1) % state.groups.length;
-  await syncToCloud();
-};
 
 const settleDebt = async (debtId) => {
   if (state.isSyncing) return;
@@ -544,3 +583,14 @@ onMounted(() => {
   nextTick(updateChart);
 });
 </script>
+
+<style scoped>
+.undo-toast-enter-active,
+.undo-toast-leave-active {
+  transition: opacity 0.25s ease, bottom 0.25s ease;
+}
+.undo-toast-enter-from,
+.undo-toast-leave-to {
+  opacity: 0;
+}
+</style>
