@@ -21,14 +21,20 @@
         </div>
       </div>
       
-      <div v-if="isAdmin" class="col-12 col-md-4">
-        <button 
+      <div v-if="isAdmin" class="col-12 col-md-4 d-flex flex-column gap-2">
+        <button
           @click="completeCurrentShift"
           :disabled="state.isSyncing || state.groups.length === 0"
-          class="btn btn-success w-100 h-100 fw-bold shadow-sm d-flex flex-column align-items-center justify-content-center gap-2 rounded-4 py-3">
-          <span class="fs-2">{{ state.isSyncing ? '⏳' : '✨' }}</span> 
+          class="btn btn-success w-100 fw-bold shadow-sm d-flex flex-column align-items-center justify-content-center gap-2 rounded-4 py-3 flex-grow-1">
+          <span class="fs-2">{{ state.isSyncing ? '⏳' : '✨' }}</span>
           <span class="fs-5">{{ state.isSyncing ? '處理中...' : '完成本次值班' }}</span>
           <span class="small text-white-50">自動紀錄並切換下一組</span>
+        </button>
+        <button
+          @click="showNotifyModal = true"
+          class="btn btn-outline-primary w-100 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2 rounded-4 py-2">
+          <span>📣</span>
+          <span>生成提醒訊息</span>
         </button>
       </div>
     </div>
@@ -235,6 +241,9 @@
       </div>
     </section>
 
+    <!-- Notify Message Modal -->
+    <NotifyMessageModal :show="showNotifyModal" @close="showNotifyModal = false" />
+
     <!-- History Substitute Edit Modal -->
     <div v-if="isSubEditModalOpen" class="position-fixed top-0 start-0 w-100 h-100 z-3 d-flex align-items-center justify-content-center" style="background-color: rgba(0,0,0,0.5); backdrop-filter: blur(2px); z-index: 1100;">
       <div class="bg-white rounded-4 shadow-lg d-flex flex-column overflow-hidden position-relative w-100 m-3" style="max-width: 420px; max-height: 90vh;">
@@ -296,11 +305,13 @@ import { computed, watch, onMounted, nextTick, ref, reactive } from 'vue';
 import Chart from 'chart.js/auto';
 import { state, syncToCloud, isAdmin, showConfirm } from '../store.js';
 import CustomDatePicker from './CustomDatePicker.vue';
+import NotifyMessageModal from './NotifyMessageModal.vue';
 
 const emit = defineEmits(['open-shift-modal']);
 
 const editingHistoryId = ref(null);
 const isSubEditModalOpen = ref(false);
+const showNotifyModal = ref(false);
 const editData = reactive({ date: '', groupId: 1, members: '', substitutesList: [] });
 
 const getActiveSubstitute = (member) => {
