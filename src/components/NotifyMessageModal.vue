@@ -154,9 +154,9 @@ const periodDescription = computed(() => {
 const compensationMessage = computed(() => {
   if (!currentGroup.value) return '';
   const memberSet = new Set(currentGroup.value.members);
-  const list = state.debts.filter(d => !d.isSettled && memberSet.has(d.creditor));
+  const list = state.debts.filter(d => !d.isSettled && memberSet.has(d.debtor));
   if (!list.length) return '';
-  const lines = list.map(d => `${d.creditor} (應回饋 ${d.dateCreated} ${d.debtor} 之${d.period}支援)`);
+  const lines = list.map(d => `${d.debtor} (應回饋 ${d.creditor} 之${d.period}支援，代班日期 ${d.dateCreated})`);
   return `\n✨ 應回饋名單：\n${lines.join('\n')}`;
 });
 
