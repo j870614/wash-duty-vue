@@ -29,7 +29,7 @@
               <img v-if="state.user.photoURL" :src="state.user.photoURL" class="rounded-circle shadow-sm border border-2" style="border-color:#fd7e14;width:28px;height:28px;object-fit:cover" alt="Avatar">
               <svg v-else xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fd7e14" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
               <span class="user-name-text">{{ state.user.displayName || state.user.email.split('@')[0] }}</span>
-              <span class="role-pill">管理員</span>
+              <span v-if="isAdmin" class="role-pill">管理員</span>
             </template>
 
             <!-- 訪客：SVG icon + 訪客文字 -->

@@ -144,11 +144,20 @@ const periodDescription = computed(() => {
   if (!p.length) return '';
   const allMeals = ['早齋', '午齋', '藥石'];
   if (p.includes('整天') || allMeals.every(m => p.includes(m))) {
-    return '三餐：早齋、午齋、藥石用齋完畢即需要洗餐盤';
+    return '早齋、午齋、藥石用齋完畢即需要洗餐盤';
   }
   const selected = allMeals.filter(m => p.includes(m));
   if (selected.length === 1) return `${selected[0]}用齋完畢即需要洗餐盤`;
   return `${selected.join('、')}用齋完畢即需要洗餐盤`;
+});
+
+const compensationMessage = computed(() => {
+  if (!currentGroup.value) return '';
+  const memberSet = new Set(currentGroup.value.members);
+  const list = state.debts.filter(d => !d.isSettled && memberSet.has(d.creditor));
+  if (!list.length) return '';
+  const lines = list.map(d => `${d.creditor} (應回饋 ${d.dateCreated} ${d.debtor} 之${d.period}支援)`);
+  return `\n✨ 應回饋名單：\n${lines.join('\n')}`;
 });
 
 const generatedMessage = computed(() => {
@@ -158,7 +167,7 @@ const generatedMessage = computed(() => {
 
 本次輪到：第${g.id}組 ${g.members.join('、')}
 
-時段：${periodDescription.value}
+時段：${periodDescription.value}${compensationMessage.value}
 
 如需要查看班表，可進入洗碗支援排班系統查閱：
 https://j870614.github.io/wash-duty-vue/`;
