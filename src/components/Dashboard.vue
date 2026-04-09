@@ -5,7 +5,14 @@
       雲端同步狀態：{{ state.syncStatusText }}
     </div>
 
+    <!-- 組別為空的引導提示 -->
+    <div v-if="state.isDataLoaded && state.groups.length === 0" class="alert alert-warning rounded-4 d-flex align-items-center justify-content-between gap-3 mb-4">
+      <span>⚠️ <strong>尚未設定組別名單</strong>，請前往「組別名單」頁面導入資料。</span>
+      <button v-if="isAdmin" @click="state.activeTab = 'roster'" class="btn btn-warning btn-sm fw-bold flex-shrink-0">前往設定 →</button>
+    </div>
+
     <!-- Top Bar: Current Shift & Admin Actions -->
+
     <div class="row g-3 mb-4">
       <div :class="isAdmin ? 'col-12 col-md-8' : 'col-12'">
         <!-- Giant Shift Indicator -->

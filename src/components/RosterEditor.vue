@@ -29,7 +29,18 @@
     </div>
 
     <div class="card-body bg-light p-4">
-      <div v-if="isEditMode && draftGroups.length === 0" class="text-center text-muted py-5">
+
+      <!-- 組別為空時的引導區塊 -->
+      <div v-if="state.groups.length === 0" class="text-center py-5">
+        <div class="fs-1 mb-3">📋</div>
+        <p class="text-muted fw-bold mb-4">目前資料庫中尚無組別資料</p>
+        <button v-if="isAdmin" @click="importSeedGroups" class="btn btn-warning fw-bold px-5 shadow-sm rounded-pill">
+          ⬆️ 導入系統預設範本
+        </button>
+        <p v-else class="text-muted small">請聯絡管理員設定組別名單</p>
+      </div>
+
+      <div v-if="isEditMode && draftGroups.length === 0 && state.groups.length > 0" class="text-center text-muted py-5">
         目前沒有任何組別，點擊上方按鈕新增。
       </div>
       <div class="row g-4">
@@ -68,7 +79,7 @@
 
 <script setup>
 import { ref } from 'vue';
-import { state, syncToCloud, isAdmin, showConfirm } from '../store.js';
+import { state, syncToCloud, isAdmin, showConfirm, SEED_GROUPS } from '../store.js';
 
 const isEditMode = ref(false);
 const draftGroups = ref([]);
@@ -85,16 +96,24 @@ const cancelEdit = () => {
 };
 
 const saveEdit = async () => {
-  showConfirm("儲存變更", "確定要儲存這份名單並覆寫雲端紀錄嗎？", async () => {
+  showConfirm('儲存變更', '確定要儲存這份名單並覆寫雲端紀錄嗎？', async () => {
     state.groups = JSON.parse(JSON.stringify(draftGroups.value));
-    
+
     // 檢查 currentGroupIndex 是否超出範圍
     if (state.currentGroupIndex >= state.groups.length && state.groups.length > 0) {
       state.currentGroupIndex = 0;
     }
-    
+
     await syncToCloud();
     isEditMode.value = false;
+  });
+};
+
+const importSeedGroups = () => {
+  showConfirm('導入預設範本', '確定要將系統預設的 15 組人員名單匯入雲端資料庫嗎？此操作會覆蓋現有資料。', async () => {
+    state.groups = JSON.parse(JSON.stringify(SEED_GROUPS));
+    state.currentGroupIndex = 0;
+    await syncToCloud();
   });
 };
 

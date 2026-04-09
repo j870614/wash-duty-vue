@@ -3,7 +3,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { getFirestore, doc, onSnapshot, setDoc } from "firebase/firestore";
 
-const INITIAL_GROUPS = [
+export const SEED_GROUPS = [
   { id: 1, members: ["普中師", "普本師"] }, { id: 2, members: ["普導師", "普遠師"] },
   { id: 3, members: ["圓戒師", "普聚師"] }, { id: 4, members: ["普切師", "普毫師"] },
   { id: 5, members: ["普計師", "普誨師"] }, { id: 6, members: ["普誏師", "普謹師"] },
@@ -15,7 +15,7 @@ const INITIAL_GROUPS = [
 ];
 
 export const state = reactive({
-  groups: JSON.parse(JSON.stringify(INITIAL_GROUPS)),
+  groups: [],
   currentGroupIndex: 0,
   debts: [],
   history: [],
@@ -109,17 +109,18 @@ const startListening = () => {
   unsubscribeData = onSnapshot(getRecordsDocRef(), (docSnap) => {
     if (docSnap.exists()) {
       const data = docSnap.data();
-      state.groups = data.groups || INITIAL_GROUPS;
+      state.groups = data.groups || [];
       state.debts = data.list || [];
       state.currentGroupIndex = data.currentGroupIndex || 0;
       state.history = data.history || [];
       state.admins = data.admins || [];
     } else {
-      syncToCloud();
+      // 資料庫尚無記錄，不自動上傳，由管理員手動導入
+      state.groups = [];
     }
     state.isDataLoaded = true;
   }, () => {
-    state.syncStatusText = "⚠️ 同步錯誤";
+    state.syncStatusText = '⚠️ 同步錯誤';
     state.isDataLoaded = true;
   });
 };
