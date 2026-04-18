@@ -163,7 +163,7 @@ const compensationMessage = computed(() => {
 const generatedMessage = computed(() => {
   if (!currentGroup.value) return '';
   const g = currentGroup.value;
-  return `${dateString.value} 需要法師支援洗碗
+  return `${dateString.value} 需要支援洗碗
 
 本次輪到：第${g.id}組 ${g.members.join('、')}
 
