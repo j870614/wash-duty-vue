@@ -170,7 +170,7 @@ const generatedMessage = computed(() => {
 時段：${periodDescription.value}${compensationMessage.value}
 
 如需要查看班表，可進入洗碗支援排班系統查閱：
-https://j870614.github.io/wash-duty-vue/`;
+https://washduty.donglinsys.com/`;
 });
 
 // 整天互斥邏輯（同 ShiftModal）
